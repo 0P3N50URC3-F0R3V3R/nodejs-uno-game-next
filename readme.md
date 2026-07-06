@@ -7,7 +7,7 @@ A multiplayer browser-based UNO card game with persistent accounts, achievements
 ---
 
 ## Screenshots
-<img width="692" height="587" alt="image" src="https://github.com/user-attachments/assets/4e5d3083-f8c3-4696-b7ab-633be1ea732a" />
+<img width="692" height="387" alt="image" src="https://github.com/user-attachments/assets/4e5d3083-f8c3-4696-b7ab-633be1ea732a" />
 <img width="692" height="587" alt="image" src="https://github.com/user-attachments/assets/659a84ff-37ad-43af-9a9b-fccce32b8530" />
 <img width="691" height="742" alt="image" src="https://github.com/user-attachments/assets/d3cb2e63-74b9-45e5-a93f-20f952e4e80f" />
 
