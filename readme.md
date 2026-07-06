@@ -11,6 +11,9 @@ A multiplayer browser-based UNO card game with persistent accounts, achievements
 ### Gameplay
 - Classic UNO rules with card deck reshuffling, skip, reverse, draw-two, wild, and wild draw-four
 - **Rulesets**: Original (standard UNO) and Stacking / Punishment Stack (+2/+4 cards stack to +8 max)
+- Nextgen Ruleset: Addition to the original gameplay with more cards, stacking and punishment cards
+- Double deck gamemode
+- Battle Royale gamemode - Only 1 can left 
 - Up to 5 players per room (human + AI)
 - AI opponents with configurable difficulty (Easy / Medium / Hard)
 - Room passwords for private games
@@ -25,7 +28,7 @@ A multiplayer browser-based UNO card game with persistent accounts, achievements
 - XP and level progression (120 levels, XP scales per level)
 - Per-session single-login enforcement — logging in on a new device kicks the previous session with an overlay notification
 
-### Achievements (63 total)
+### Achievements
 Achievements are grouped into four categories:
 
 | Category | Description |
@@ -38,13 +41,20 @@ Achievements are grouped into four categories:
 Each achievement awards **AP (Achievement Points)** and XP. A toast notification with animation fires on unlock mid-game.
 
 ### Daily & Weekly Challenges
-- 3 daily challenges and 3 weekly challenges generated fresh each period
+- generated daily challenges and weekly challenges fresh each period
 - Challenge types include: play N action cards, win N rounds, call UNO N times, play for N minutes, etc.
 - Progress tracked in real time during matches; XP and AP rewarded on completion
 
 ### Leaderboards & Player Search
 - Global leaderboard by XP/level, wins, losses, cards played, total play time, longest match, wild cards
 - Search any player by username; click to open their public profile modal showing level, stats, and unlocked achievements
+
+### Ingame Store
+- Gold money added - only achievable thru playing games and completing achievements and challanges.
+- You can buy animated rectangles
+- You can buy animated backgrounds
+- You can buy titles
+- You can buy Name text effects. 
 
 ### Side Panels
 Six collapsible side panels, each pinnable (persists across sessions via localStorage):
@@ -72,6 +82,19 @@ Bulgarian · Czech · Danish · German · Greek · English · Spanish · Finnish
 ### Scale-to-Fit
 - Desktop: game scales down proportionally if the browser window is smaller than 1300×870, preserving the full layout
 - Mobile/tablet: native layout (no scale transform), suitable for portrait and landscape
+
+### Extended menus
+- Ingame Manual
+- Ingame Forum board system - config thru admin interface.
+
+### Admin interface
+- News system
+- Editing Users
+- Gold rates
+- Forum editing
+- Store Editing
+- Prices Editing
+- Items upload/delete/edit/create to the store.
 
 ---
 
@@ -105,14 +128,6 @@ node server.js
 ```
 
 Server starts on port 80 by default. Change in `server.js` (`server.listen(80)`).
-
-### Docker
-
-```bash
-docker-compose up
-```
-
-Runs the built app in a container accessible on your local network.
 
 ### Config
 
