@@ -1,13 +1,24 @@
 <template>
-    <div class="playing_card" @click="clickHandler?clickHandler(type):null" :class="[type, hoverable]"><div></div><div></div><div></div></div>
+    <div class="playing_card" @click="clickHandler?clickHandler(type):null" :class="[type, hoverable]">
+        <template v-if="isNextgen">
+            <NextgenGlyph :code="glyphCode" size="sm"></NextgenGlyph>
+            <NextgenGlyph :code="glyphCode" size="sm"></NextgenGlyph>
+            <NextgenGlyph :code="glyphCode" size="lg"></NextgenGlyph>
+        </template>
+        <template v-else><div></div><div></div><div></div></template>
+    </div>
 </template>
 
 <script>
+    import NextgenGlyph from "./NextgenGlyph"
     export default {
         name: "CardTemplate",
         props: ['type', 'clickHandler', 'hover'],
+        components: { NextgenGlyph },
         computed:{
-            hoverable:function(){return (this.hover === 'true') ? 'card-hoverable' : '';}
+            hoverable:function(){return (this.hover === 'true') ? 'card-hoverable' : '';},
+            isNextgen:function(){ return !!(this.type && this.type.length > 2); },
+            glyphCode:function(){ return this.type ? this.type.slice(1) : ''; }
         }
     }
 </script>
@@ -25,32 +36,41 @@
     .card-hoverable:hover{
         box-shadow: 0px 0px 1px 5px rgba(255,234,0,1);
     }     
-    .r0,.r1,.r2,.r3,.r4,.r5,.r6,.r7,.r8,.r9,.rp,.rn,.rr,.rc,.rg{
+    .r0,.r1,.r2,.r3,.r4,.r5,.r6,.r7,.r8,.r9,.rp,.rn,.rr,.rc,.rg,
+    .rp6,.rp8,.rm2,.rth,
+    .rp10,.rrda,.rtg1,.rtg2,.rrot{
         background:url('../../public/img/outl.png') no-repeat, url('../../public/img/grad.png') repeat-x 0 6px;
     }
-    .g0,.g1,.g2,.g3,.g4,.g5,.g6,.g7,.g8,.g9,.gp,.gn,.gr,.gc,.gg{
+    .g0,.g1,.g2,.g3,.g4,.g5,.g6,.g7,.g8,.g9,.gp,.gn,.gr,.gc,.gg,
+    .gp6,.gp8,.gm2,.gth,
+    .gp10,.grda,.gtg1,.gtg2,.grot{
         background:url('../../public/img/outl.png') no-repeat, url('../../public/img/grad.png') repeat-x 0 -122px;
     }
-    .b0,.b1,.b2,.b3,.b4,.b5,.b6,.b7,.b8,.b9,.bp,.bn,.br,.bc,.bg{
+    .b0,.b1,.b2,.b3,.b4,.b5,.b6,.b7,.b8,.b9,.bp,.bn,.br,.bc,.bg,
+    .bp6,.bp8,.bm2,.bth,
+    .bp10,.brda,.btg1,.btg2,.brot{
         background:url('../../public/img/outl.png') no-repeat, url('../../public/img/grad.png') repeat-x 0 -250px;
     }
-    .y0,.y1,.y2,.y3,.y4,.y5,.y6,.y7,.y8,.y9,.yp,.yn,.yr,.yc,.yg{
+    .y0,.y1,.y2,.y3,.y4,.y5,.y6,.y7,.y8,.y9,.yp,.yn,.yr,.yc,.yg,
+    .yp6,.yp8,.ym2,.yth,
+    .yp10,.yrda,.ytg1,.ytg2,.yrot{
         background: url('../../public/img/outl.png') no-repeat, url('../../public/img/grad.png') repeat-x 0 -378px;
     }
-    .kg,.kc{
+    .kg,.kc,
+    .kp10,.krda,.ktg1,.ktg2,.krot,.krbw{
         background: url('../../public/img/outl.png') no-repeat, url('../../public/img/grad.png') repeat-x 0 -506px;
     }
-    .playing_card>div:nth-child(1){
+    .playing_card>*:nth-child(1){
         position:absolute;
         top:9px;
         left:9px;
     }
-    .playing_card>div:nth-child(2){
+    .playing_card>*:nth-child(2){
         position:absolute;
         bottom:8px;
         right:9px;
     }
-    .playing_card>div:nth-child(3){
+    .playing_card>*:nth-child(3){
         position:absolute;
         top:35px;
         left:11px;
@@ -258,6 +278,18 @@
         top:33px;
         left:11px;
         background:url('../../public/img/symbols_s.png') no-repeat -74px 0;
+    }
+    .kp10>*:nth-child(3),.krda>*:nth-child(3),
+    .ktg1>*:nth-child(3),.ktg2>*:nth-child(3),.krot>*:nth-child(3),.krbw>*:nth-child(3),
+    .rp10>*:nth-child(3),.gp10>*:nth-child(3),.bp10>*:nth-child(3),.yp10>*:nth-child(3),
+    .rrda>*:nth-child(3),.grda>*:nth-child(3),.brda>*:nth-child(3),.yrda>*:nth-child(3),
+    .rtg1>*:nth-child(3),.gtg1>*:nth-child(3),.btg1>*:nth-child(3),.ytg1>*:nth-child(3),
+    .rtg2>*:nth-child(3),.gtg2>*:nth-child(3),.btg2>*:nth-child(3),.ytg2>*:nth-child(3),
+    .rrot>*:nth-child(3),.grot>*:nth-child(3),.brot>*:nth-child(3),.yrot>*:nth-child(3){
+        width:70px;
+        height:76px;
+        top:33px;
+        left:11px;
     }
     .rc>div:nth-child(1),.rc>div:nth-child(2),
     .gc>div:nth-child(1),.gc>div:nth-child(2),

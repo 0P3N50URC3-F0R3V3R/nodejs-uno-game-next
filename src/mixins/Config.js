@@ -10,7 +10,6 @@ export default {
           playersInitialized:false,
           drawPos:{x:150,y:240},
           discardPos:{x:300,y:210},
-          scoresPos:{x:370,y:210},          
           players:{},
           timeline:null,
           specialCard:false,
@@ -42,6 +41,7 @@ export default {
               };
           }
       }
+      return { x: 0, y: 0 };
     },
     initClientsConfig:function(clients){                
       this.config.players = {};
@@ -70,11 +70,12 @@ export default {
   mounted:function(){
     this.config.timeline = gsap.timeline();
     this.config.screenWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-    this.config.screenHeigh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
-    this.config.boardWidth = Math.min(600, this.config.screenWidth);
-    this.config.boardHeight = 800;
+    this.config.screenHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+    this.config.boardWidth = Math.max(600, Math.min(780, this.config.screenWidth));
+    this.config.boardHeight = Math.max(800, Math.min(900, this.config.screenHeight - 80));
+    this.config.drawPos.x = Math.round(this.config.boardWidth * 0.38);
     this.config.drawPos.y = (this.config.boardHeight * 0.5) - 60;
+    this.config.discardPos.x = Math.round(this.config.boardWidth * 0.60);
     this.config.discardPos.y = (this.config.boardHeight * 0.5) - 80;
-    this.config.scoresPos.y = (this.config.boardHeight * 0.5) - 60;
   }
 }

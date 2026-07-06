@@ -10,14 +10,19 @@ module.exports = class BeginActionHandler extends GameActionHandler{
         super(gameService);
     }
     handleAction(data){
-        let client = this.getGameService().getClientRepository().findByName(data.client.name);
-        if(client instanceof UNOClient && !client.getReady()){
+        let cr = this.getGameService().getClientRepository();
+        let client = cr.findByName(data.client.name);
+        if(client instanceof UNOClient && !client.isAI && !client.getReady()){
             client.setReady(true);
         }
-        if(!this.getGameService().getClientRepository().findByReady(false)
-            &&  this.getGameService().getClientRepository().count() > 1
-        ){
+        // Only require human players to be ready
+        let humans = cr.findAll().filter(function(c){ return !c.isAI; });
+        let allHumansReady = humans.length > 0 && !humans.find(function(c){ return !c.getReady(); });
+        if(allHumansReady && cr.count() > 1){
+            // Ensure AI are ready before dealing
+            cr.findAll().filter(function(c){ return c.isAI; }).forEach(function(c){ c.setReady(true); });
             this.getGameService().getGameRulesModel().deal();
+            this.getGameService()._justDealt = true;
         }
         return true;
     }

@@ -6,9 +6,9 @@ module.exports = class GameServiceFactory{
     constructor() {
 
     }
-    create(name, channel){
+    create(name, channel, config){
         if(name === "UNO"){
-            return new UNOGameService(channel);
+            return new UNOGameService(channel, config || {});
         };
         return null;
     }

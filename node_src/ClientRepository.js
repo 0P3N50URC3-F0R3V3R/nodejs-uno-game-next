@@ -48,4 +48,7 @@ module.exports = class ClientRepository{
         this.clients.push(client);
         return client;
     }
+    removeByName(name){
+        this.clients = this.clients.filter(function(c){ return c.getName() !== name; });
+    }
 };

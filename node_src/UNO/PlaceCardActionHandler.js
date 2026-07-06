@@ -8,7 +8,10 @@ module.exports = class PlaceCardActionHandler extends GameActionHandler {
     handleAction(data){
         let client = this.getGameService().getClientRepository().findByName(data.client.name);
         if(client instanceof UNOClient){
-            this.getGameService().getGameRulesModel().place(client, data.card);            
+            this.getGameService().getGameRulesModel().place(client, data.card);
+            if(client.getCardsCount() === 1){
+                this.getGameService().startUnoCheck(client.getName());
+            }
         }
         return true;
     }

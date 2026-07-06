@@ -1,20 +1,26 @@
 {
-  "name": "game",
-  "version": "1.0.0",
+  "name": "unoweb",
+  "version": "1.9.228",
   "description": "",
   "main": "index.js",
   "repository": "https://github.com/houseofbits/nodejs-uno-game",
   "scripts": {
-    "build": "vue-cli-service build --mode=development",
+    "build": "vue-cli-service build --mode=development --no-clean",
     "serve": "vue-cli-service serve"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.13.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.10.0",
     "express": "^4.17.1",
+    "express-rate-limit": "^8.5.2",
     "gsap": "^3.2.6",
+    "multer": "^2.1.1",
+    "sharp": "^0.35.1",
     "socket.io": "^2.3.0",
+    "svg-captcha": "^1.4.0",
     "vue": "^2.6.11",
     "vue-cookies": "^1.7.0",
     "vue-socket.io": "^3.0.7"

@@ -17,17 +17,34 @@ module.exports = class LoginActionHandler extends GameActionHandler {
 
         let cr = this.getGameService().getClientRepository();
 
-        //Check if game has not started yet
-        if(cr.findByReady(false) || cr.count() < 2){
+        let existingClient = cr.findByName(data.client.name);
 
-            let client = cr.findByName(data.client.name);
-            if(!client){
-            
-                //Create new client
+        // Reconnect: player with same name re-joining
+        if(existingClient && existingClient.disconnected){
+            existingClient.setSocketId(data.socketId);
+            existingClient.disconnected = false;
+            if(existingClient._disconnectTimer){
+                clearTimeout(existingClient._disconnectTimer);
+                existingClient._disconnectTimer = null;
+            }
+            return;
+        }
+
+        // Allow join if game not started or not full (max 5)
+        let humans = cr.findAll().filter(function(c){ return !c.isAI; });
+        if(cr.findByReady(false) || humans.length < 1 || cr.count() < 5){
+            if(!existingClient){
                 let cl = new UNOClient(data.client.name);
                 cl.setSocketId(data.socketId);
-                client = cr.insert(cl);
-            
+                cr.insert(cl);
+                // Auto-start if this human fills the last slot (all others are AI)
+                let grm = this.getGameService().getGameRulesModel();
+                let humansNow = cr.findAll().filter(function(c){ return !c.isAI; });
+                if(!grm.isSeriesStarted() && cr.count() >= 5 && humansNow.length === 1 && humansNow[0] === cl){
+                    cl.setReady(true);
+                    grm.deal();
+                    this.getGameService()._justDealt = true;
+                }
             }
         }else{
             this.getGameService().getMessageRepository().insert(new Message('error', 'Game has already started', data.socketId));

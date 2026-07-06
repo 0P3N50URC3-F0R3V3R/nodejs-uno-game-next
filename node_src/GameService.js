@@ -12,10 +12,9 @@ module.exports = class GameService{
     }
     handleAction(socket, action, data){
 
-        data.socketId = socket.id;
+        if(!data || typeof data !== 'object' || !data.client) return;
 
-        //Should be replaced with some sort of access token
-        let clientName = data.client.name;
+        data.socketId = socket.id;
 
         for(let key in this.actionHandlers){
             if(key === action){                
@@ -32,5 +31,8 @@ module.exports = class GameService{
     }
     getMessageRepository(){
         return this.messagesRepository;
-    }    
+    }
+    getId(){
+        return this.id;
+    }
 };

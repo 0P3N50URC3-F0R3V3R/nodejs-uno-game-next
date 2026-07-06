@@ -21,7 +21,7 @@ module.exports = class Card{
         return this.type.charAt(0);
     }
     getNumber(){
-        return this.type.charAt(1);
+        return this.type.slice(1);
     }    
     setOwner(owner){
         this.owner = owner;

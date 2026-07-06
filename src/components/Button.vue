@@ -1,11 +1,11 @@
 <template>
-    <div class="button" @click="clickHandler"><i :class="'fa fa-'+faIcon"></i> <slot></slot></div>
+    <div :class="['button', variant === 'danger' ? 'button-danger' : '']" @click="clickHandler"><i :class="'fa fa-'+faIcon"></i> <slot></slot></div>
 </template>
 
 <script>
     export default {
         name: "Button",
-        props: ['faIcon', 'clickHandler']
+        props: ['faIcon', 'clickHandler', 'variant']
     }
 </script>
 
@@ -49,7 +49,21 @@
         background: #ff9100;
         background: linear-gradient(to bottom,  #ff9100 0%,#ffb300 100%);
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.32) inset, 0 -1px 0px white inset;
-        text-shadow: none;   
-    } 
+        text-shadow: none;
+    }
+    .button-danger {
+        color: #fff;
+        background: #c0392b;
+        background: linear-gradient(to bottom, #e74c3c 0%, #c0392b 100%);
+        text-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+    }
+    .button-danger:hover {
+        background: #e74c3c;
+        background: linear-gradient(to bottom, #ff5a4a 0%, #e74c3c 100%);
+    }
+    .button-danger:active {
+        background: #a93226;
+        background: linear-gradient(to bottom, #a93226 0%, #c0392b 100%);
+    }
 
 </style>

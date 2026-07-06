@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNO Forum</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0a05;color:#d4cda4;font-family:"Trebuchet MS",sans-serif;min-height:100vh;padding-top:54px}
+a{color:#ffb833;text-decoration:none}
+a:hover{color:#ffdd00}
+button{font-family:inherit;cursor:pointer;border-radius:4px;border:1px solid;transition:background .15s}
+input,textarea{font-family:inherit;background:rgba(0,0,0,0.5);border:1px solid rgba(154,101,21,0.6);border-radius:4px;color:#d4cda4;padding:6px 10px;outline:none;width:100%}
+input:focus,textarea:focus{border-color:#ffb833}
+textarea{resize:vertical;min-height:120px}
+select{font-family:inherit;background:rgba(0,0,0,0.6);border:1px solid rgba(154,101,21,0.5);border-radius:4px;color:#d4cda4;padding:4px 8px;outline:none;cursor:pointer;font-size:11px}
+select:focus{border-color:#ffb833}
+.btn{padding:5px 14px;font-size:12px;font-weight:bold;letter-spacing:.8px}
+.btn-gold{background:rgba(154,101,21,0.25);border-color:rgba(154,101,21,0.7);color:#ffdd00}.btn-gold:hover{background:rgba(154,101,21,0.5)}
+.btn-red{background:rgba(180,30,30,0.25);border-color:rgba(220,60,60,0.5);color:#ffaaaa}.btn-red:hover{background:rgba(220,30,30,0.45)}
+.btn-dim{background:transparent;border-color:#444;color:#888}.btn-dim:hover{border-color:#888;color:#aaa}
+.btn-sm{padding:3px 9px;font-size:11px}
+.btn-xs{padding:2px 7px;font-size:10px;letter-spacing:.5px}
+/* HEADER */
+#f-hdr{position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(180deg,#1a0e00,#110900);border-bottom:1px solid rgba(154,101,21,0.4);height:54px;display:flex;align-items:center;padding:0 16px;gap:12px}
+#f-logo{font-size:16px;font-weight:bold;letter-spacing:3px;color:#ffdd00;white-space:nowrap;text-decoration:none}
+#f-logo span{color:rgba(255,221,0,0.4)}
+#f-breadcrumb{flex:1;font-size:11px;color:rgba(212,205,164,0.5);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
+#f-breadcrumb a{color:rgba(212,205,164,0.5)}
+#f-user{display:flex;align-items:center;gap:8px;flex-shrink:0;font-size:12px}
+.f-uname{color:#ffb833;font-weight:bold}
+.f-role-mod{background:rgba(40,180,120,0.2);border:1px solid rgba(40,180,120,0.5);color:#44ddaa;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:bold;letter-spacing:.5px}
+.f-role-admin{background:rgba(200,160,0,0.2);border:1px solid rgba(200,160,0,0.5);color:#ffdd00;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:bold;letter-spacing:.5px}
+.f-game-link{font-size:11px;color:rgba(212,205,164,0.4);border:1px solid #333;border-radius:4px;padding:3px 8px;white-space:nowrap;text-decoration:none}
+.f-game-link:hover{color:#d4cda4;border-color:#666}
+#f-lang-sel{max-width:110px}
+/* MAIN */
+#f-app{max-width:960px;margin:0 auto;padding:24px 16px}
+.f-error{color:#ff6666;font-size:12px;margin:8px 0;padding:8px 12px;background:rgba(220,30,30,0.1);border:1px solid rgba(220,30,30,0.3);border-radius:4px}
+.f-loading{color:rgba(212,205,164,0.4);font-size:12px;padding:40px 0;text-align:center}
+.f-empty{color:rgba(212,205,164,0.35);font-size:12px;padding:32px 0;text-align:center;font-style:italic}
+/* BOARDS */
+.f-section-title{font-size:12px;letter-spacing:2px;color:rgba(212,205,164,0.4);margin-bottom:14px;text-transform:uppercase}
+.board-card{display:flex;align-items:center;gap:16px;background:rgba(0,0,0,0.4);border:1px solid rgba(154,101,21,0.3);border-radius:8px;padding:16px 20px;margin-bottom:10px;transition:border-color .15s;text-decoration:none;color:inherit;cursor:pointer}
+.board-card:hover{border-color:rgba(154,101,21,0.7);background:rgba(0,0,0,0.6)}
+.board-icon{font-size:24px;flex-shrink:0;width:40px;text-align:center;opacity:.8}
+.board-info{flex:1;min-width:0}
+.board-name{font-size:15px;font-weight:bold;color:#d4cda4;margin-bottom:3px}
+.board-desc{font-size:12px;color:rgba(212,205,164,0.5);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.board-meta{font-size:11px;color:rgba(212,205,164,0.35);display:flex;gap:16px}
+.board-last{font-size:11px;color:rgba(212,205,164,0.35);flex-shrink:0;text-align:right}
+/* THREADS */
+.f-board-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.f-board-hdr-info{flex:1}
+.f-page-title{font-size:18px;font-weight:bold;color:#ffdd00;letter-spacing:1px;margin-bottom:4px}
+.f-page-desc{font-size:12px;color:rgba(212,205,164,0.45)}
+.thread-list{border:1px solid rgba(154,101,21,0.3);border-radius:8px;overflow:hidden;background:rgba(0,0,0,0.3)}
+.thread-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(154,101,21,0.15);text-decoration:none;color:inherit;transition:background .15s}
+.thread-row:last-child{border-bottom:none}
+.thread-row:hover{background:rgba(154,101,21,0.08)}
+.thread-flags{display:flex;flex-direction:column;align-items:center;gap:4px;width:22px;flex-shrink:0}
+.flag-pin{color:#ffdd00;font-size:12px}
+.flag-lock{color:rgba(212,205,164,0.4);font-size:12px}
+.thread-main{flex:1;min-width:0}
+.thread-title{font-size:14px;color:#d4cda4;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thread-row:hover .thread-title{color:#fff}
+.thread-sub{font-size:11px;color:rgba(212,205,164,0.4)}
+.thread-sub .t-author{color:rgba(212,205,164,0.6)}
+.thread-stats{text-align:right;flex-shrink:0;font-size:11px;color:rgba(212,205,164,0.4)}
+.thread-stats .ts-num{font-size:14px;color:rgba(212,205,164,0.6);font-weight:bold;display:block}
+.badge-locked{display:inline-block;font-size:9px;color:#888;border:1px solid #444;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle}
+.badge-pinned{display:inline-block;font-size:9px;color:#ffdd00;border:1px solid rgba(255,221,0,0.4);border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle}
+/* PAGINATION */
+.f-pag{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 0}
+.f-pag-info{font-size:11px;color:rgba(212,205,164,0.4)}
+/* THREAD VIEW */
+.thread-view-hdr{margin-bottom:20px}
+.thread-view-title{font-size:17px;font-weight:bold;color:#d4cda4;line-height:1.35;margin-bottom:8px}
+.thread-view-meta{font-size:11px;color:rgba(212,205,164,0.4);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.thread-mod-bar{display:flex;gap:6px;flex-wrap:wrap;padding:10px 0 14px}
+/* POSTS */
+.post-card{background:rgba(0,0,0,0.4);border:1px solid rgba(154,101,21,0.25);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.post-card.post-first{border-color:rgba(154,101,21,0.4)}
+.post-meta{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(0,0,0,0.2);border-bottom:1px solid rgba(154,101,21,0.15);flex-wrap:wrap}
+.post-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid rgba(154,101,21,0.4);flex-shrink:0}
+.post-author-info{flex:1;min-width:0}
+.post-uname{font-size:13px;font-weight:bold;color:#d4cda4}
+.post-stats{font-size:10px;color:rgba(212,205,164,0.4)}
+.post-date{font-size:10px;color:rgba(212,205,164,0.35);flex-shrink:0;text-align:right}
+.post-edited{font-size:9px;color:#666;font-style:italic}
+.post-body{padding:14px 16px}
+.post-content{font-size:13px;line-height:1.7;word-break:break-word;overflow-wrap:break-word}
+.post-content p{margin-bottom:.8em}.post-content p:last-child{margin-bottom:0}
+.post-content pre{background:rgba(0,0,0,0.5);border:1px solid #333;border-radius:4px;padding:10px 12px;overflow-x:auto;margin:.6em 0}
+.post-content code{background:rgba(0,0,0,0.4);border:1px solid #333;border-radius:3px;padding:1px 5px;font-size:12px;font-family:Consolas,monospace}
+.post-content pre code{background:none;border:none;padding:0;font-size:12px}
+.post-content blockquote{border-left:3px solid rgba(154,101,21,0.5);padding:4px 12px;margin:.5em 0;color:rgba(212,205,164,0.6);font-style:italic}
+.post-content h1,.post-content h2,.post-content h3{color:#ffb833;margin:.8em 0 .4em}
+.post-content h1{font-size:17px}.post-content h2{font-size:15px}.post-content h3{font-size:13px}
+.post-content a{color:#ffb833}.post-content a:hover{color:#ffdd00}
+.post-content img{max-width:100%;border-radius:4px;margin:4px 0}
+.post-attachments{padding:0 16px 10px;display:flex;flex-wrap:wrap;gap:8px}
+.post-att-img{max-width:200px;max-height:150px;border-radius:4px;border:1px solid rgba(154,101,21,0.3)}
+.post-att-file{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(154,101,21,0.3);border-radius:4px;padding:6px 10px;font-size:11px;color:#d4cda4;text-decoration:none}.post-att-file:hover{border-color:rgba(154,101,21,0.6)}
+.post-actions{display:flex;align-items:center;gap:8px;padding:8px 16px;border-top:1px solid rgba(154,101,21,0.1);flex-wrap:wrap}
+.like-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid rgba(154,101,21,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:rgba(212,205,164,0.6);transition:all .15s}
+.like-btn:hover{border-color:rgba(154,101,21,0.7);color:#d4cda4}
+.like-btn.liked{border-color:rgba(255,184,51,0.6);color:#ffb833;background:rgba(154,101,21,0.15)}
+.post-mod-actions{margin-left:auto;display:flex;gap:6px}
+/* EDITOR */
+.f-editor-wrap{background:rgba(0,0,0,0.3);border:1px solid rgba(154,101,21,0.4);border-radius:8px;overflow:hidden;margin-top:12px}
+.f-toolbar{display:flex;gap:2px;padding:8px 10px;border-bottom:1px solid rgba(154,101,21,0.25);flex-wrap:wrap;background:rgba(0,0,0,0.2)}
+.f-tb-btn{background:rgba(154,101,21,0.1);border:1px solid rgba(154,101,21,0.3);border-radius:3px;color:#d4cda4;padding:3px 9px;font-size:12px;min-width:30px;text-align:center}.f-tb-btn:hover{background:rgba(154,101,21,0.3);color:#fff}
+.f-editor-wrap textarea{border:none;border-radius:0;background:transparent;padding:12px 14px;font-size:13px;line-height:1.6;min-height:140px;resize:vertical;width:100%}
+.f-editor-wrap textarea:focus{border:none;box-shadow:none}
+.f-editor-footer{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid rgba(154,101,21,0.2);flex-wrap:wrap}
+.f-att-list{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.f-att-chip{display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.4);border:1px solid rgba(154,101,21,0.3);border-radius:20px;padding:3px 10px;font-size:11px}
+.f-att-chip button{background:transparent;border:none;color:#666;padding:0 0 0 4px;font-size:12px;cursor:pointer;line-height:1}.f-att-chip button:hover{color:#ff6666}
+/* FORM */
+.f-form-card{background:rgba(0,0,0,0.3);border:1px solid rgba(154,101,21,0.35);border-radius:8px;padding:20px}
+.f-form-label{font-size:11px;color:rgba(212,205,164,0.5);letter-spacing:1px;margin-bottom:6px;display:block;text-transform:uppercase}
+.f-title-input{font-size:15px;margin-bottom:14px;padding:8px 12px}
+.f-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:rgba(212,205,164,0.5);margin-bottom:16px;cursor:pointer;border:none;background:none;padding:0}
+.f-back:hover{color:#d4cda4}
+/* REPLY */
+.reply-section{margin-top:20px}
+.reply-section h3{font-size:12px;letter-spacing:2px;color:rgba(212,205,164,0.4);margin-bottom:12px;text-transform:uppercase}
+.login-prompt{background:rgba(0,0,0,0.3);border:1px solid rgba(154,101,21,0.3);border-radius:8px;padding:20px;text-align:center;color:rgba(212,205,164,0.5);font-size:13px}
+.login-prompt a{color:#ffb833}
+/* INLINE EDIT */
+.post-edit-wrap{padding:4px 0}
+.post-edit-actions{display:flex;gap:8px;margin-top:8px}
+</style>
+</head>
+<body>
+<header id="f-hdr">
+    <a href="#/" id="f-logo">UNO <span>·</span> FORUM</a>
+    <nav id="f-breadcrumb"></nav>
+    <div id="f-user"></div>
+    <select id="f-lang-sel" onchange="setLang(this.value)" title="Language"></select>
+</header>
+<div id="f-app"><div class="f-loading">Loading...</div></div>
+<script>
+'use strict';
+
+/* ── I18N ───────────────────────────────────────────────────────────────── */
+var LANGS = {
+en:{name:'English',boards:'BOARDS',no_boards:'No boards yet.',loading:'Loading...',load_fail:'Failed to load.',board_404:'Board not found.',thread_404:'Thread not found.',no_threads:'No threads yet. Be the first to post!',new_thread:'+ New Thread',back_boards:'← All Boards',back:'← Back',threads:'threads',posts:'posts',last_active:'Last active',never:'no posts',replies:'replies',last_by:'last by',page:'Page {p} of {t}',prev:'Prev',next:'Next',views:'views',lock:'Lock',unlock:'Unlock',pin:'Pin',unpin:'Unpin',del_thread:'Delete Thread',edited:'edited',reply_h:'Reply',reply_ph:'Write your reply...',attach:'Attach',post_reply:'Post Reply',login_link:'the game',login_msg:'Log in via {link} to reply.',locked_msg:'Thread is locked.',new_thread_h:'New Thread',in_board:'in {name}',title_lbl:'Thread Title',title_ph:'Thread title...',content_lbl:'Content',post_ph:'Write your post...',post_btn:'Post Thread',required:'Title and content are required.',edit:'Edit',del:'Del',save:'Save',cancel:'Cancel',not_logged:'Not logged in',go_game:'← Game',login_game:'Login in Game',del_post_q:'Delete this post?',del_thread_q:'Delete entire thread? This cannot be undone.',just_now:'just now',m_ago:'{n}m ago',h_ago:'{n}h ago',d_ago:'{n}d ago',pinned:'PINNED',locked:'LOCKED',mod:'MOD',admin:'ADMIN',user_posts:'{n} posts'},
+hu:{name:'Magyar',boards:'FÓRUMOK',no_boards:'Még nincsenek fórumok.',loading:'Betöltés...',load_fail:'Betöltés sikertelen.',board_404:'Fórum nem található.',thread_404:'Téma nem található.',no_threads:'Még nincs téma. Légy az első!',new_thread:'+ Új téma',back_boards:'← Összes fórum',back:'← Vissza',threads:'téma',posts:'bejegyzés',last_active:'Utolsó aktivitás',never:'nincs bejegyzés',replies:'válasz',last_by:'utoljára:',page:'{p}. oldal / {t}',prev:'Előző',next:'Következő',views:'megtekintés',lock:'Zárolás',unlock:'Feloldás',pin:'Kitűzés',unpin:'Kitűzés törlése',del_thread:'Téma törlése',edited:'szerkesztve',reply_h:'Válasz',reply_ph:'Írd be a válaszod...',attach:'Csatolmány',post_reply:'Válasz küldése',login_link:'játékban',login_msg:'A válaszhoz jelentkezz be a {link}.',locked_msg:'A téma zárolva van.',new_thread_h:'Új téma',in_board:'{name} fórumban',title_lbl:'Téma címe',title_ph:'Téma címe...',content_lbl:'Tartalom',post_ph:'Írd be a bejegyzésedet...',post_btn:'Téma közzététele',required:'A cím és a tartalom kötelező.',edit:'Szerk.',del:'Törlés',save:'Mentés',cancel:'Mégse',not_logged:'Nincs bejelentkezve',go_game:'← Játék',login_game:'Bejelentkezés a játékban',del_post_q:'Törlöd ezt a bejegyzést?',del_thread_q:'Törlöd az egész témát? Ez nem vonható vissza.',just_now:'épp most',m_ago:'{n} perce',h_ago:'{n} órája',d_ago:'{n} napja',pinned:'KITŰZVE',locked:'ZÁROLVA',mod:'MOD',admin:'ADMIN',user_posts:'{n} bejegyzés'},
+de:{name:'Deutsch',boards:'FOREN',no_boards:'Noch keine Foren.',loading:'Laden...',load_fail:'Fehler beim Laden.',board_404:'Forum nicht gefunden.',thread_404:'Thread nicht gefunden.',no_threads:'Noch keine Threads. Sei der Erste!',new_thread:'+ Neuer Thread',back_boards:'← Alle Foren',back:'← Zurück',threads:'Threads',posts:'Beiträge',last_active:'Zuletzt aktiv',never:'keine Beiträge',replies:'Antworten',last_by:'zuletzt von',page:'Seite {p} von {t}',prev:'Zurück',next:'Weiter',views:'Aufrufe',lock:'Sperren',unlock:'Entsperren',pin:'Anheften',unpin:'Loslösen',del_thread:'Thread löschen',edited:'bearbeitet',reply_h:'Antworten',reply_ph:'Schreib deine Antwort...',attach:'Anhang',post_reply:'Antwort senden',login_link:'Spiel',login_msg:'Melde dich über das {link} an, um zu antworten.',locked_msg:'Thread ist gesperrt.',new_thread_h:'Neuer Thread',in_board:'in {name}',title_lbl:'Thread-Titel',title_ph:'Thread-Titel...',content_lbl:'Inhalt',post_ph:'Schreib deinen Beitrag...',post_btn:'Thread erstellen',required:'Titel und Inhalt sind erforderlich.',edit:'Bearb.',del:'Löschen',save:'Speichern',cancel:'Abbrechen',not_logged:'Nicht angemeldet',go_game:'← Spiel',login_game:'Im Spiel anmelden',del_post_q:'Diesen Beitrag löschen?',del_thread_q:'Gesamten Thread löschen? Dies kann nicht rückgängig gemacht werden.',just_now:'gerade eben',m_ago:'vor {n}m',h_ago:'vor {n}h',d_ago:'vor {n}d',pinned:'ANGEHEFTET',locked:'GESPERRT',mod:'MOD',admin:'ADMIN',user_posts:'{n} Beiträge'},
+fr:{name:'Français',boards:'FORUMS',no_boards:'Aucun forum pour l\'instant.',loading:'Chargement...',load_fail:'Erreur de chargement.',board_404:'Forum introuvable.',thread_404:'Fil introuvable.',no_threads:'Aucun fil pour l\'instant. Sois le premier !',new_thread:'+ Nouveau fil',back_boards:'← Tous les forums',back:'← Retour',threads:'fils',posts:'messages',last_active:'Dernière activité',never:'aucun message',replies:'réponses',last_by:'dernier par',page:'Page {p} sur {t}',prev:'Préc.',next:'Suiv.',views:'vues',lock:'Verrouiller',unlock:'Déverrouiller',pin:'Épingler',unpin:'Désépingler',del_thread:'Supprimer le fil',edited:'modifié',reply_h:'Réponse',reply_ph:'Écris ta réponse...',attach:'Joindre',post_reply:'Envoyer la réponse',login_link:'jeu',login_msg:'Connecte-toi via le {link} pour répondre.',locked_msg:'Le fil est verrouillé.',new_thread_h:'Nouveau fil',in_board:'dans {name}',title_lbl:'Titre du fil',title_ph:'Titre du fil...',content_lbl:'Contenu',post_ph:'Écris ton message...',post_btn:'Créer le fil',required:'Le titre et le contenu sont requis.',edit:'Modifier',del:'Suppr.',save:'Enregistrer',cancel:'Annuler',not_logged:'Non connecté',go_game:'← Jeu',login_game:'Se connecter dans le jeu',del_post_q:'Supprimer ce message ?',del_thread_q:'Supprimer tout le fil ? Cette action est irréversible.',just_now:'à l\'instant',m_ago:'il y a {n}m',h_ago:'il y a {n}h',d_ago:'il y a {n}j',pinned:'ÉPINGLÉ',locked:'VERROUILLÉ',mod:'MOD',admin:'ADMIN',user_posts:'{n} messages'},
+es:{name:'Español',boards:'FOROS',no_boards:'Aún no hay foros.',loading:'Cargando...',load_fail:'Error al cargar.',board_404:'Foro no encontrado.',thread_404:'Hilo no encontrado.',no_threads:'Aún no hay hilos. ¡Sé el primero!',new_thread:'+ Nuevo hilo',back_boards:'← Todos los foros',back:'← Volver',threads:'hilos',posts:'mensajes',last_active:'Última actividad',never:'sin mensajes',replies:'respuestas',last_by:'último por',page:'Página {p} de {t}',prev:'Ant.',next:'Sig.',views:'vistas',lock:'Bloquear',unlock:'Desbloquear',pin:'Fijar',unpin:'Desfijar',del_thread:'Eliminar hilo',edited:'editado',reply_h:'Responder',reply_ph:'Escribe tu respuesta...',attach:'Adjuntar',post_reply:'Enviar respuesta',login_link:'juego',login_msg:'Inicia sesión en el {link} para responder.',locked_msg:'El hilo está bloqueado.',new_thread_h:'Nuevo hilo',in_board:'en {name}',title_lbl:'Título del hilo',title_ph:'Título del hilo...',content_lbl:'Contenido',post_ph:'Escribe tu mensaje...',post_btn:'Crear hilo',required:'El título y el contenido son obligatorios.',edit:'Editar',del:'Elim.',save:'Guardar',cancel:'Cancelar',not_logged:'No conectado',go_game:'← Juego',login_game:'Iniciar sesión en el juego',del_post_q:'¿Eliminar este mensaje?',del_thread_q:'¿Eliminar todo el hilo? Esta acción no se puede deshacer.',just_now:'ahora mismo',m_ago:'hace {n}m',h_ago:'hace {n}h',d_ago:'hace {n}d',pinned:'FIJADO',locked:'BLOQUEADO',mod:'MOD',admin:'ADMIN',user_posts:'{n} mensajes'},
+pt:{name:'Português (BR)',boards:'FÓRUNS',no_boards:'Nenhum fórum ainda.',loading:'Carregando...',load_fail:'Falha ao carregar.',board_404:'Fórum não encontrado.',thread_404:'Tópico não encontrado.',no_threads:'Nenhum tópico ainda. Seja o primeiro!',new_thread:'+ Novo tópico',back_boards:'← Todos os fóruns',back:'← Voltar',threads:'tópicos',posts:'posts',last_active:'Última atividade',never:'sem posts',replies:'respostas',last_by:'último por',page:'Página {p} de {t}',prev:'Ant.',next:'Próx.',views:'visualizações',lock:'Bloquear',unlock:'Desbloquear',pin:'Fixar',unpin:'Desfixar',del_thread:'Excluir tópico',edited:'editado',reply_h:'Responder',reply_ph:'Escreva sua resposta...',attach:'Anexar',post_reply:'Enviar resposta',login_link:'jogo',login_msg:'Faça login via {link} para responder.',locked_msg:'Tópico bloqueado.',new_thread_h:'Novo tópico',in_board:'em {name}',title_lbl:'Título do tópico',title_ph:'Título do tópico...',content_lbl:'Conteúdo',post_ph:'Escreva sua mensagem...',post_btn:'Criar tópico',required:'Título e conteúdo são obrigatórios.',edit:'Editar',del:'Excluir',save:'Salvar',cancel:'Cancelar',not_logged:'Não conectado',go_game:'← Jogo',login_game:'Entrar no jogo',del_post_q:'Excluir este post?',del_thread_q:'Excluir todo o tópico? Isso não pode ser desfeito.',just_now:'agora mesmo',m_ago:'há {n}m',h_ago:'há {n}h',d_ago:'há {n}d',pinned:'FIXADO',locked:'BLOQUEADO',mod:'MOD',admin:'ADMIN',user_posts:'{n} posts'},
+pt_pt:{name:'Português (PT)',boards:'FÓRUNS',no_boards:'Nenhum fórum ainda.',loading:'A carregar...',load_fail:'Falha ao carregar.',board_404:'Fórum não encontrado.',thread_404:'Tópico não encontrado.',no_threads:'Nenhum tópico ainda. Sê o primeiro!',new_thread:'+ Novo tópico',back_boards:'← Todos os fóruns',back:'← Voltar',threads:'tópicos',posts:'mensagens',last_active:'Última atividade',never:'sem mensagens',replies:'respostas',last_by:'último por',page:'Página {p} de {t}',prev:'Ant.',next:'Próx.',views:'visualizações',lock:'Bloquear',unlock:'Desbloquear',pin:'Afixar',unpin:'Desafixar',del_thread:'Eliminar tópico',edited:'editado',reply_h:'Responder',reply_ph:'Escreve a tua resposta...',attach:'Anexar',post_reply:'Enviar resposta',login_link:'jogo',login_msg:'Inicia sessão via {link} para responder.',locked_msg:'Tópico bloqueado.',new_thread_h:'Novo tópico',in_board:'em {name}',title_lbl:'Título do tópico',title_ph:'Título do tópico...',content_lbl:'Conteúdo',post_ph:'Escreve a tua mensagem...',post_btn:'Criar tópico',required:'O título e o conteúdo são obrigatórios.',edit:'Editar',del:'Eliminar',save:'Guardar',cancel:'Cancelar',not_logged:'Não autenticado',go_game:'← Jogo',login_game:'Entrar no jogo',del_post_q:'Eliminar esta mensagem?',del_thread_q:'Eliminar todo o tópico? Esta ação não pode ser revertida.',just_now:'agora mesmo',m_ago:'há {n}m',h_ago:'há {n}h',d_ago:'há {n}d',pinned:'AFIXADO',locked:'BLOQUEADO',mod:'MOD',admin:'ADMIN',user_posts:'{n} mensagens'},
+it:{name:'Italiano',boards:'FORUM',no_boards:'Nessun forum ancora.',loading:'Caricamento...',load_fail:'Caricamento fallito.',board_404:'Forum non trovato.',thread_404:'Thread non trovato.',no_threads:'Nessun thread ancora. Sii il primo!',new_thread:'+ Nuovo thread',back_boards:'← Tutti i forum',back:'← Indietro',threads:'thread',posts:'post',last_active:'Ultima attività',never:'nessun post',replies:'risposte',last_by:'ultimo da',page:'Pagina {p} di {t}',prev:'Prec.',next:'Succ.',views:'visite',lock:'Blocca',unlock:'Sblocca',pin:'Fissa',unpin:'Rimuovi fissaggio',del_thread:'Elimina thread',edited:'modificato',reply_h:'Rispondi',reply_ph:'Scrivi la tua risposta...',attach:'Allegato',post_reply:'Invia risposta',login_link:'gioco',login_msg:'Accedi tramite il {link} per rispondere.',locked_msg:'Il thread è bloccato.',new_thread_h:'Nuovo thread',in_board:'in {name}',title_lbl:'Titolo del thread',title_ph:'Titolo del thread...',content_lbl:'Contenuto',post_ph:'Scrivi il tuo messaggio...',post_btn:'Crea thread',required:'Titolo e contenuto sono obbligatori.',edit:'Modifica',del:'Elimina',save:'Salva',cancel:'Annulla',not_logged:'Non connesso',go_game:'← Gioco',login_game:'Accedi nel gioco',del_post_q:'Eliminare questo post?',del_thread_q:'Eliminare l\'intero thread? Questa azione è irreversibile.',just_now:'proprio ora',m_ago:'{n}m fa',h_ago:'{n}h fa',d_ago:'{n}g fa',pinned:'FISSATO',locked:'BLOCCATO',mod:'MOD',admin:'ADMIN',user_posts:'{n} post'},
+ru:{name:'Русский',boards:'ФОРУМЫ',no_boards:'Форумов пока нет.',loading:'Загрузка...',load_fail:'Ошибка загрузки.',board_404:'Форум не найден.',thread_404:'Тема не найдена.',no_threads:'Тем пока нет. Будьте первым!',new_thread:'+ Новая тема',back_boards:'← Все форумы',back:'← Назад',threads:'темы',posts:'сообщений',last_active:'Последняя активность',never:'нет сообщений',replies:'ответов',last_by:'последний:',page:'Страница {p} из {t}',prev:'Пред.',next:'След.',views:'просмотров',lock:'Закрыть',unlock:'Открыть',pin:'Закрепить',unpin:'Открепить',del_thread:'Удалить тему',edited:'изменено',reply_h:'Ответить',reply_ph:'Напишите ответ...',attach:'Прикрепить',post_reply:'Отправить ответ',login_link:'игре',login_msg:'Войдите в {link} чтобы ответить.',locked_msg:'Тема закрыта.',new_thread_h:'Новая тема',in_board:'в {name}',title_lbl:'Заголовок темы',title_ph:'Заголовок темы...',content_lbl:'Содержание',post_ph:'Напишите сообщение...',post_btn:'Создать тему',required:'Заголовок и содержание обязательны.',edit:'Изм.',del:'Удалить',save:'Сохранить',cancel:'Отмена',not_logged:'Не вошли',go_game:'← Игра',login_game:'Войти в игре',del_post_q:'Удалить это сообщение?',del_thread_q:'Удалить всю тему? Это нельзя отменить.',just_now:'только что',m_ago:'{n}м назад',h_ago:'{n}ч назад',d_ago:'{n}д назад',pinned:'ЗАКРЕПЛЕНО',locked:'ЗАКРЫТО',mod:'МОД',admin:'АДМН',user_posts:'{n} сообщений'},
+uk:{name:'Українська',boards:'ФОРУМИ',no_boards:'Форумів поки немає.',loading:'Завантаження...',load_fail:'Помилка завантаження.',board_404:'Форум не знайдено.',thread_404:'Тему не знайдено.',no_threads:'Тем поки немає. Будьте першим!',new_thread:'+ Нова тема',back_boards:'← Всі форуми',back:'← Назад',threads:'теми',posts:'повідомлень',last_active:'Остання активність',never:'немає повідомлень',replies:'відповідей',last_by:'останній:',page:'Сторінка {p} з {t}',prev:'Поп.',next:'Наст.',views:'переглядів',lock:'Закрити',unlock:'Відкрити',pin:'Закріпити',unpin:'Відкріпити',del_thread:'Видалити тему',edited:'змінено',reply_h:'Відповісти',reply_ph:'Напишіть відповідь...',attach:'Прикріпити',post_reply:'Надіслати відповідь',login_link:'грі',login_msg:'Увійдіть у {link}, щоб відповісти.',locked_msg:'Тему закрито.',new_thread_h:'Нова тема',in_board:'у {name}',title_lbl:'Заголовок теми',title_ph:'Заголовок теми...',content_lbl:'Зміст',post_ph:'Напишіть повідомлення...',post_btn:'Створити тему',required:'Заголовок і зміст обов\'язкові.',edit:'Ред.',del:'Видалити',save:'Зберегти',cancel:'Скасувати',not_logged:'Не увійшли',go_game:'← Гра',login_game:'Увійти у грі',del_post_q:'Видалити це повідомлення?',del_thread_q:'Видалити всю тему? Це не можна скасувати.',just_now:'щойно',m_ago:'{n}хв тому',h_ago:'{n}год тому',d_ago:'{n}д тому',pinned:'ЗАКРІПЛЕНО',locked:'ЗАКРИТО',mod:'МОД',admin:'АДМН',user_posts:'{n} повідомлень'},
+pl:{name:'Polski',boards:'FORA',no_boards:'Brak forów.',loading:'Ładowanie...',load_fail:'Błąd ładowania.',board_404:'Forum nie znaleziono.',thread_404:'Wątek nie znaleziony.',no_threads:'Brak wątków. Bądź pierwszy!',new_thread:'+ Nowy wątek',back_boards:'← Wszystkie fora',back:'← Wstecz',threads:'wątki',posts:'posty',last_active:'Ostatnia aktywność',never:'brak postów',replies:'odpowiedzi',last_by:'ostatnio przez',page:'Strona {p} z {t}',prev:'Poprz.',next:'Nast.',views:'wyświetleń',lock:'Zablokuj',unlock:'Odblokuj',pin:'Przypnij',unpin:'Odepnij',del_thread:'Usuń wątek',edited:'edytowano',reply_h:'Odpowiedz',reply_ph:'Napisz odpowiedź...',attach:'Załącz',post_reply:'Wyślij odpowiedź',login_link:'grę',login_msg:'Zaloguj się przez {link} aby odpowiadać.',locked_msg:'Wątek jest zablokowany.',new_thread_h:'Nowy wątek',in_board:'w {name}',title_lbl:'Tytuł wątku',title_ph:'Tytuł wątku...',content_lbl:'Treść',post_ph:'Napisz post...',post_btn:'Utwórz wątek',required:'Tytuł i treść są wymagane.',edit:'Edyt.',del:'Usuń',save:'Zapisz',cancel:'Anuluj',not_logged:'Niezalogowany',go_game:'← Gra',login_game:'Zaloguj w grze',del_post_q:'Usunąć ten post?',del_thread_q:'Usunąć cały wątek? Tego nie można cofnąć.',just_now:'przed chwilą',m_ago:'{n}m temu',h_ago:'{n}h temu',d_ago:'{n}d temu',pinned:'PRZYPIĘTY',locked:'ZABLOKOWANY',mod:'MOD',admin:'ADMIN',user_posts:'{n} postów'},
+cs:{name:'Čeština',boards:'FÓRA',no_boards:'Zatím žádná fóra.',loading:'Načítání...',load_fail:'Chyba načítání.',board_404:'Fórum nenalezeno.',thread_404:'Vlákno nenalezeno.',no_threads:'Zatím žádná vlákna. Buď první!',new_thread:'+ Nové vlákno',back_boards:'← Všechna fóra',back:'← Zpět',threads:'vlákna',posts:'příspěvků',last_active:'Poslední aktivita',never:'žádné příspěvky',replies:'odpovědí',last_by:'naposledy od',page:'Strana {p} z {t}',prev:'Předch.',next:'Další',views:'zobrazení',lock:'Zamknout',unlock:'Odemknout',pin:'Připnout',unpin:'Odepnout',del_thread:'Smazat vlákno',edited:'upraveno',reply_h:'Odpovědět',reply_ph:'Napište odpověď...',attach:'Příloha',post_reply:'Odeslat odpověď',login_link:'hru',login_msg:'Přihlas se přes {link} pro odpověď.',locked_msg:'Vlákno je zamčeno.',new_thread_h:'Nové vlákno',in_board:'v {name}',title_lbl:'Název vlákna',title_ph:'Název vlákna...',content_lbl:'Obsah',post_ph:'Napište příspěvek...',post_btn:'Vytvořit vlákno',required:'Název a obsah jsou povinné.',edit:'Uprav.',del:'Smazat',save:'Uložit',cancel:'Zrušit',not_logged:'Nepřihlášen',go_game:'← Hra',login_game:'Přihlásit se ve hře',del_post_q:'Smazat tento příspěvek?',del_thread_q:'Smazat celé vlákno? Toto nelze vrátit zpět.',just_now:'právě teď',m_ago:'před {n}m',h_ago:'před {n}h',d_ago:'před {n}d',pinned:'PŘIPNUTO',locked:'ZAMČENO',mod:'MOD',admin:'ADMIN',user_posts:'{n} příspěvků'},
+sk:{name:'Slovenčina',boards:'FÓRA',no_boards:'Zatiaľ žiadne fóra.',loading:'Načítavanie...',load_fail:'Chyba načítania.',board_404:'Fórum nenájdené.',thread_404:'Vlákno nenájdené.',no_threads:'Zatiaľ žiadne vlákna. Buď prvý!',new_thread:'+ Nové vlákno',back_boards:'← Všetky fóra',back:'← Späť',threads:'vlákna',posts:'príspevkov',last_active:'Posledná aktivita',never:'žiadne príspevky',replies:'odpovedí',last_by:'naposledy od',page:'Strana {p} z {t}',prev:'Predch.',next:'Ďalšia',views:'zobrazení',lock:'Zamknúť',unlock:'Odomknúť',pin:'Pripnúť',unpin:'Odopnúť',del_thread:'Zmazať vlákno',edited:'upravené',reply_h:'Odpovedať',reply_ph:'Napíš odpoveď...',attach:'Príloha',post_reply:'Odoslať odpoveď',login_link:'hru',login_msg:'Prihlás sa cez {link} pre odpoveď.',locked_msg:'Vlákno je zamknuté.',new_thread_h:'Nové vlákno',in_board:'v {name}',title_lbl:'Názov vlákna',title_ph:'Názov vlákna...',content_lbl:'Obsah',post_ph:'Napíš príspevok...',post_btn:'Vytvoriť vlákno',required:'Názov a obsah sú povinné.',edit:'Uprav.',del:'Zmazať',save:'Uložiť',cancel:'Zrušiť',not_logged:'Neprihlásený',go_game:'← Hra',login_game:'Prihlásiť sa v hre',del_post_q:'Zmazať tento príspevok?',del_thread_q:'Zmazať celé vlákno? Toto sa nedá vrátiť.',just_now:'práve teraz',m_ago:'pred {n}m',h_ago:'pred {n}h',d_ago:'pred {n}d',pinned:'PRIPNUTÉ',locked:'ZAMKNUTÉ',mod:'MOD',admin:'ADMIN',user_posts:'{n} príspevkov'},
+ro:{name:'Română',boards:'FORUMURI',no_boards:'Niciun forum deocamdată.',loading:'Se încarcă...',load_fail:'Eroare la încărcare.',board_404:'Forum negăsit.',thread_404:'Fir negăsit.',no_threads:'Niciun fir deocamdată. Fii primul!',new_thread:'+ Fir nou',back_boards:'← Toate forumurile',back:'← Înapoi',threads:'fire',posts:'mesaje',last_active:'Ultima activitate',never:'niciun mesaj',replies:'răspunsuri',last_by:'ultimul de',page:'Pagina {p} din {t}',prev:'Înapoi',next:'Înainte',views:'vizualizări',lock:'Blochează',unlock:'Deblochează',pin:'Fixează',unpin:'Defixează',del_thread:'Șterge firul',edited:'editat',reply_h:'Răspunde',reply_ph:'Scrie răspunsul tău...',attach:'Atașează',post_reply:'Trimite răspunsul',login_link:'joc',login_msg:'Autentifică-te prin {link} pentru a răspunde.',locked_msg:'Firul este blocat.',new_thread_h:'Fir nou',in_board:'în {name}',title_lbl:'Titlul firului',title_ph:'Titlul firului...',content_lbl:'Conținut',post_ph:'Scrie mesajul tău...',post_btn:'Creează firul',required:'Titlul și conținutul sunt obligatorii.',edit:'Editează',del:'Șterge',save:'Salvează',cancel:'Anulează',not_logged:'Neautentificat',go_game:'← Joc',login_game:'Autentifică-te în joc',del_post_q:'Ștergi acest mesaj?',del_thread_q:'Ștergi tot firul? Această acțiune nu poate fi anulată.',just_now:'chiar acum',m_ago:'acum {n}m',h_ago:'acum {n}h',d_ago:'acum {n}z',pinned:'FIXAT',locked:'BLOCAT',mod:'MOD',admin:'ADMIN',user_posts:'{n} mesaje'},
+nl:{name:'Nederlands',boards:'FORUMS',no_boards:'Nog geen forums.',loading:'Laden...',load_fail:'Laden mislukt.',board_404:'Forum niet gevonden.',thread_404:'Thread niet gevonden.',no_threads:'Nog geen threads. Wees de eerste!',new_thread:'+ Nieuwe thread',back_boards:'← Alle forums',back:'← Terug',threads:'threads',posts:'berichten',last_active:'Laatste activiteit',never:'geen berichten',replies:'reacties',last_by:'laatste door',page:'Pagina {p} van {t}',prev:'Vorige',next:'Volgende',views:'weergaven',lock:'Vergrendelen',unlock:'Ontgrendelen',pin:'Vastmaken',unpin:'Losmaken',del_thread:'Thread verwijderen',edited:'bewerkt',reply_h:'Reageren',reply_ph:'Schrijf je reactie...',attach:'Bijlage',post_reply:'Reactie plaatsen',login_link:'spel',login_msg:'Log in via het {link} om te reageren.',locked_msg:'Thread is vergrendeld.',new_thread_h:'Nieuwe thread',in_board:'in {name}',title_lbl:'Threadtitel',title_ph:'Threadtitel...',content_lbl:'Inhoud',post_ph:'Schrijf je bericht...',post_btn:'Thread aanmaken',required:'Titel en inhoud zijn verplicht.',edit:'Bewerk',del:'Verwijder',save:'Opslaan',cancel:'Annuleren',not_logged:'Niet ingelogd',go_game:'← Spel',login_game:'Inloggen in spel',del_post_q:'Dit bericht verwijderen?',del_thread_q:'Hele thread verwijderen? Dit kan niet ongedaan worden gemaakt.',just_now:'zojuist',m_ago:'{n}m geleden',h_ago:'{n}u geleden',d_ago:'{n}d geleden',pinned:'VASTGEMAAKT',locked:'VERGRENDELD',mod:'MOD',admin:'ADMIN',user_posts:'{n} berichten'},
+da:{name:'Dansk',boards:'FORA',no_boards:'Ingen fora endnu.',loading:'Indlæser...',load_fail:'Indlæsning mislykkedes.',board_404:'Forum ikke fundet.',thread_404:'Tråd ikke fundet.',no_threads:'Ingen tråde endnu. Vær den første!',new_thread:'+ Ny tråd',back_boards:'← Alle fora',back:'← Tilbage',threads:'tråde',posts:'indlæg',last_active:'Seneste aktivitet',never:'ingen indlæg',replies:'svar',last_by:'sidst af',page:'Side {p} af {t}',prev:'Forrige',next:'Næste',views:'visninger',lock:'Lås',unlock:'Lås op',pin:'Fastgør',unpin:'Frigør',del_thread:'Slet tråd',edited:'redigeret',reply_h:'Svar',reply_ph:'Skriv dit svar...',attach:'Vedhæft',post_reply:'Send svar',login_link:'spillet',login_msg:'Log ind via {link} for at svare.',locked_msg:'Tråden er låst.',new_thread_h:'Ny tråd',in_board:'i {name}',title_lbl:'Trådens titel',title_ph:'Trådens titel...',content_lbl:'Indhold',post_ph:'Skriv dit indlæg...',post_btn:'Opret tråd',required:'Titel og indhold er påkrævet.',edit:'Rediger',del:'Slet',save:'Gem',cancel:'Annuller',not_logged:'Ikke logget ind',go_game:'← Spil',login_game:'Log ind i spillet',del_post_q:'Slet dette indlæg?',del_thread_q:'Slet hele tråden? Dette kan ikke fortrydes.',just_now:'lige nu',m_ago:'for {n}m siden',h_ago:'for {n}t siden',d_ago:'for {n}d siden',pinned:'FASTGJORT',locked:'LÅST',mod:'MOD',admin:'ADMIN',user_posts:'{n} indlæg'},
+sv:{name:'Svenska',boards:'FORUM',no_boards:'Inga forum ännu.',loading:'Laddar...',load_fail:'Laddning misslyckades.',board_404:'Forum hittades inte.',thread_404:'Tråd hittades inte.',no_threads:'Inga trådar ännu. Var den första!',new_thread:'+ Ny tråd',back_boards:'← Alla forum',back:'← Tillbaka',threads:'trådar',posts:'inlägg',last_active:'Senaste aktivitet',never:'inga inlägg',replies:'svar',last_by:'senast av',page:'Sida {p} av {t}',prev:'Föregående',next:'Nästa',views:'visningar',lock:'Lås',unlock:'Lås upp',pin:'Fäst',unpin:'Lossa',del_thread:'Radera tråd',edited:'redigerad',reply_h:'Svara',reply_ph:'Skriv ditt svar...',attach:'Bifoga',post_reply:'Skicka svar',login_link:'spelet',login_msg:'Logga in via {link} för att svara.',locked_msg:'Tråden är låst.',new_thread_h:'Ny tråd',in_board:'i {name}',title_lbl:'Trådens titel',title_ph:'Trådens titel...',content_lbl:'Innehåll',post_ph:'Skriv ditt inlägg...',post_btn:'Skapa tråd',required:'Titel och innehåll krävs.',edit:'Redigera',del:'Radera',save:'Spara',cancel:'Avbryt',not_logged:'Ej inloggad',go_game:'← Spel',login_game:'Logga in i spelet',del_post_q:'Radera detta inlägg?',del_thread_q:'Radera hela tråden? Detta kan inte ångras.',just_now:'just nu',m_ago:'för {n}m sedan',h_ago:'för {n}h sedan',d_ago:'för {n}d sedan',pinned:'FÄST',locked:'LÅST',mod:'MOD',admin:'ADMIN',user_posts:'{n} inlägg'},
+no:{name:'Norsk',boards:'FORUM',no_boards:'Ingen forum ennå.',loading:'Laster...',load_fail:'Lasting mislyktes.',board_404:'Forum ikke funnet.',thread_404:'Tråd ikke funnet.',no_threads:'Ingen tråder ennå. Vær den første!',new_thread:'+ Ny tråd',back_boards:'← Alle forum',back:'← Tilbake',threads:'tråder',posts:'innlegg',last_active:'Siste aktivitet',never:'ingen innlegg',replies:'svar',last_by:'sist av',page:'Side {p} av {t}',prev:'Forrige',next:'Neste',views:'visninger',lock:'Lås',unlock:'Lås opp',pin:'Fest',unpin:'Løsne',del_thread:'Slett tråd',edited:'redigert',reply_h:'Svar',reply_ph:'Skriv svaret ditt...',attach:'Vedlegg',post_reply:'Send svar',login_link:'spillet',login_msg:'Logg inn via {link} for å svare.',locked_msg:'Tråden er låst.',new_thread_h:'Ny tråd',in_board:'i {name}',title_lbl:'Trådens tittel',title_ph:'Trådens tittel...',content_lbl:'Innhold',post_ph:'Skriv innlegget ditt...',post_btn:'Opprett tråd',required:'Tittel og innhold er påkrevd.',edit:'Rediger',del:'Slett',save:'Lagre',cancel:'Avbryt',not_logged:'Ikke innlogget',go_game:'← Spill',login_game:'Logg inn i spillet',del_post_q:'Slette dette innlegget?',del_thread_q:'Slette hele tråden? Dette kan ikke angres.',just_now:'akkurat nå',m_ago:'for {n}m siden',h_ago:'for {n}t siden',d_ago:'for {n}d siden',pinned:'FESTET',locked:'LÅST',mod:'MOD',admin:'ADMIN',user_posts:'{n} innlegg'},
+fi:{name:'Suomi',boards:'FOORUMIT',no_boards:'Ei foorumeja vielä.',loading:'Ladataan...',load_fail:'Lataus epäonnistui.',board_404:'Foorumia ei löydy.',thread_404:'Ketjua ei löydy.',no_threads:'Ei ketjuja vielä. Ole ensimmäinen!',new_thread:'+ Uusi ketju',back_boards:'← Kaikki foorumit',back:'← Takaisin',threads:'ketjuja',posts:'viestejä',last_active:'Viimeisin aktiviteetti',never:'ei viestejä',replies:'vastauksia',last_by:'viimeksi:',page:'Sivu {p} / {t}',prev:'Edellinen',next:'Seuraava',views:'näyttökertaa',lock:'Lukitse',unlock:'Avaa lukitus',pin:'Kiinnitä',unpin:'Irrota',del_thread:'Poista ketju',edited:'muokattu',reply_h:'Vastaa',reply_ph:'Kirjoita vastauksesi...',attach:'Liite',post_reply:'Lähetä vastaus',login_link:'pelissä',login_msg:'Kirjaudu {link} vastataksesi.',locked_msg:'Ketju on lukittu.',new_thread_h:'Uusi ketju',in_board:'{name}-foorumilla',title_lbl:'Ketjun otsikko',title_ph:'Ketjun otsikko...',content_lbl:'Sisältö',post_ph:'Kirjoita viestisi...',post_btn:'Luo ketju',required:'Otsikko ja sisältö ovat pakollisia.',edit:'Muokkaa',del:'Poista',save:'Tallenna',cancel:'Peruuta',not_logged:'Ei kirjautunut',go_game:'← Peli',login_game:'Kirjaudu pelissä',del_post_q:'Poistaa tämä viesti?',del_thread_q:'Poistaa koko ketju? Tätä ei voi kumota.',just_now:'juuri nyt',m_ago:'{n}m sitten',h_ago:'{n}h sitten',d_ago:'{n}d sitten',pinned:'KIINNITETTY',locked:'LUKITTU',mod:'MOD',admin:'ADMIN',user_posts:'{n} viestiä'},
+el:{name:'Ελληνικά',boards:'ΦΟΡΟΥΜ',no_boards:'Δεν υπάρχουν φόρουμ ακόμα.',loading:'Φόρτωση...',load_fail:'Αποτυχία φόρτωσης.',board_404:'Το φόρουμ δεν βρέθηκε.',thread_404:'Το θέμα δεν βρέθηκε.',no_threads:'Δεν υπάρχουν θέματα ακόμα. Γίνε ο πρώτος!',new_thread:'+ Νέο θέμα',back_boards:'← Όλα τα φόρουμ',back:'← Πίσω',threads:'θέματα',posts:'μηνύματα',last_active:'Τελευταία δραστηριότητα',never:'κανένα μήνυμα',replies:'απαντήσεις',last_by:'τελευταία από',page:'Σελίδα {p} από {t}',prev:'Προηγ.',next:'Επόμ.',views:'προβολές',lock:'Κλείδωμα',unlock:'Ξεκλείδωμα',pin:'Καρφίτσωμα',unpin:'Αφαίρεση καρφίτσας',del_thread:'Διαγραφή θέματος',edited:'επεξεργάστηκε',reply_h:'Απάντηση',reply_ph:'Γράψε την απάντησή σου...',attach:'Επισύναψη',post_reply:'Αποστολή απάντησης',login_link:'παιχνίδι',login_msg:'Συνδέσου μέσω του {link} για να απαντήσεις.',locked_msg:'Το θέμα είναι κλειδωμένο.',new_thread_h:'Νέο θέμα',in_board:'στο {name}',title_lbl:'Τίτλος θέματος',title_ph:'Τίτλος θέματος...',content_lbl:'Περιεχόμενο',post_ph:'Γράψε το μήνυμά σου...',post_btn:'Δημιουργία θέματος',required:'Ο τίτλος και το περιεχόμενο είναι υποχρεωτικά.',edit:'Επεξ.',del:'Διαγρ.',save:'Αποθήκευση',cancel:'Ακύρωση',not_logged:'Δεν έχεις συνδεθεί',go_game:'← Παιχνίδι',login_game:'Σύνδεση στο παιχνίδι',del_post_q:'Διαγραφή αυτού του μηνύματος;',del_thread_q:'Διαγραφή ολόκληρου του θέματος; Αυτό δεν μπορεί να αναιρεθεί.',just_now:'μόλις τώρα',m_ago:'πριν {n}λ',h_ago:'πριν {n}ω',d_ago:'πριν {n}μ',pinned:'ΚΑΡΦΙΤΣΩΜΈΝΟ',locked:'ΚΛΕΙΔΩΜΈΝΟ',mod:'MOD',admin:'ADMIN',user_posts:'{n} μηνύματα'},
+bg:{name:'Български',boards:'ФОРУМИ',no_boards:'Все още няма форуми.',loading:'Зареждане...',load_fail:'Грешка при зареждане.',board_404:'Форумът не е намерен.',thread_404:'Темата не е намерена.',no_threads:'Все още няма теми. Бъди първи!',new_thread:'+ Нова тема',back_boards:'← Всички форуми',back:'← Назад',threads:'теми',posts:'публикации',last_active:'Последна активност',never:'няма публикации',replies:'отговора',last_by:'последно от',page:'Страница {p} от {t}',prev:'Пред.',next:'След.',views:'прегледи',lock:'Заключи',unlock:'Отключи',pin:'Закачи',unpin:'Откачи',del_thread:'Изтрий темата',edited:'редактирано',reply_h:'Отговор',reply_ph:'Напиши отговора си...',attach:'Прикачи',post_reply:'Изпрати отговор',login_link:'играта',login_msg:'Влез в {link}, за да отговориш.',locked_msg:'Темата е заключена.',new_thread_h:'Нова тема',in_board:'в {name}',title_lbl:'Заглавие на темата',title_ph:'Заглавие на темата...',content_lbl:'Съдържание',post_ph:'Напиши публикацията си...',post_btn:'Създай тема',required:'Заглавието и съдържанието са задължителни.',edit:'Редакт.',del:'Изтрий',save:'Запази',cancel:'Отказ',not_logged:'Не сте влезли',go_game:'← Игра',login_game:'Влезте в играта',del_post_q:'Изтриване на тази публикация?',del_thread_q:'Изтриване на цялата тема? Това не може да се отмени.',just_now:'в момента',m_ago:'преди {n}м',h_ago:'преди {n}ч',d_ago:'преди {n}д',pinned:'ЗАКАЧЕНО',locked:'ЗАКЛЮЧЕНО',mod:'МОД',admin:'АДМН',user_posts:'{n} публикации'},
+tr:{name:'Türkçe',boards:'FORUMLAR',no_boards:'Henüz forum yok.',loading:'Yükleniyor...',load_fail:'Yükleme başarısız.',board_404:'Forum bulunamadı.',thread_404:'Konu bulunamadı.',no_threads:'Henüz konu yok. İlk sen ol!',new_thread:'+ Yeni konu',back_boards:'← Tüm forumlar',back:'← Geri',threads:'konu',posts:'mesaj',last_active:'Son aktivite',never:'mesaj yok',replies:'yanıt',last_by:'son yazan',page:'Sayfa {p} / {t}',prev:'Önceki',next:'Sonraki',views:'görüntüleme',lock:'Kilitle',unlock:'Kilidi aç',pin:'Sabitle',unpin:'Sabitlemeyi kaldır',del_thread:'Konuyu sil',edited:'düzenlendi',reply_h:'Yanıtla',reply_ph:'Yanıtını yaz...',attach:'Ekle',post_reply:'Yanıt gönder',login_link:'oyunda',login_msg:'Yanıtlamak için {link} giriş yap.',locked_msg:'Konu kilitli.',new_thread_h:'Yeni konu',in_board:'{name} içinde',title_lbl:'Konu başlığı',title_ph:'Konu başlığı...',content_lbl:'İçerik',post_ph:'Mesajını yaz...',post_btn:'Konu oluştur',required:'Başlık ve içerik zorunludur.',edit:'Düzenle',del:'Sil',save:'Kaydet',cancel:'İptal',not_logged:'Giriş yapılmadı',go_game:'← Oyun',login_game:'Oyunda giriş yap',del_post_q:'Bu mesajı sil?',del_thread_q:'Tüm konuyu sil? Bu işlem geri alınamaz.',just_now:'az önce',m_ago:'{n}d önce',h_ago:'{n}s önce',d_ago:'{n}g önce',pinned:'SABİTLENDİ',locked:'KİLİTLİ',mod:'MOD',admin:'ADMİN',user_posts:'{n} mesaj'},
+id:{name:'Indonesia',boards:'FORUM',no_boards:'Belum ada forum.',loading:'Memuat...',load_fail:'Gagal memuat.',board_404:'Forum tidak ditemukan.',thread_404:'Utas tidak ditemukan.',no_threads:'Belum ada utas. Jadilah yang pertama!',new_thread:'+ Utas Baru',back_boards:'← Semua Forum',back:'← Kembali',threads:'utas',posts:'postingan',last_active:'Aktivitas terakhir',never:'belum ada postingan',replies:'balasan',last_by:'terakhir oleh',page:'Halaman {p} dari {t}',prev:'Sebelumnya',next:'Berikutnya',views:'tampilan',lock:'Kunci',unlock:'Buka kunci',pin:'Sematkan',unpin:'Lepas sematan',del_thread:'Hapus utas',edited:'diedit',reply_h:'Balas',reply_ph:'Tulis balasanmu...',attach:'Lampirkan',post_reply:'Kirim balasan',login_link:'game',login_msg:'Masuk melalui {link} untuk membalas.',locked_msg:'Utas dikunci.',new_thread_h:'Utas Baru',in_board:'di {name}',title_lbl:'Judul utas',title_ph:'Judul utas...',content_lbl:'Isi',post_ph:'Tulis postinganmu...',post_btn:'Buat utas',required:'Judul dan isi wajib diisi.',edit:'Edit',del:'Hapus',save:'Simpan',cancel:'Batal',not_logged:'Belum masuk',go_game:'← Game',login_game:'Masuk di game',del_post_q:'Hapus postingan ini?',del_thread_q:'Hapus seluruh utas? Tindakan ini tidak dapat dibatalkan.',just_now:'baru saja',m_ago:'{n}m lalu',h_ago:'{n}j lalu',d_ago:'{n}h lalu',pinned:'DISEMATKAN',locked:'DIKUNCI',mod:'MOD',admin:'ADMIN',user_posts:'{n} postingan'},
+vi:{name:'Tiếng Việt',boards:'DIỄN ĐÀN',no_boards:'Chưa có diễn đàn.',loading:'Đang tải...',load_fail:'Tải thất bại.',board_404:'Không tìm thấy diễn đàn.',thread_404:'Không tìm thấy chủ đề.',no_threads:'Chưa có chủ đề. Hãy là người đầu tiên!',new_thread:'+ Chủ đề mới',back_boards:'← Tất cả diễn đàn',back:'← Quay lại',threads:'chủ đề',posts:'bài viết',last_active:'Hoạt động gần nhất',never:'chưa có bài',replies:'trả lời',last_by:'gần nhất bởi',page:'Trang {p} / {t}',prev:'Trước',next:'Tiếp',views:'lượt xem',lock:'Khóa',unlock:'Mở khóa',pin:'Ghim',unpin:'Bỏ ghim',del_thread:'Xóa chủ đề',edited:'đã sửa',reply_h:'Trả lời',reply_ph:'Viết trả lời của bạn...',attach:'Đính kèm',post_reply:'Gửi trả lời',login_link:'trò chơi',login_msg:'Đăng nhập qua {link} để trả lời.',locked_msg:'Chủ đề đã bị khóa.',new_thread_h:'Chủ đề mới',in_board:'trong {name}',title_lbl:'Tiêu đề chủ đề',title_ph:'Tiêu đề chủ đề...',content_lbl:'Nội dung',post_ph:'Viết bài của bạn...',post_btn:'Tạo chủ đề',required:'Tiêu đề và nội dung là bắt buộc.',edit:'Sửa',del:'Xóa',save:'Lưu',cancel:'Hủy',not_logged:'Chưa đăng nhập',go_game:'← Trò chơi',login_game:'Đăng nhập trong trò chơi',del_post_q:'Xóa bài viết này?',del_thread_q:'Xóa toàn bộ chủ đề? Không thể hoàn tác.',just_now:'vừa xong',m_ago:'{n}p trước',h_ago:'{n}g trước',d_ago:'{n}ng trước',pinned:'ĐÃ GHIM',locked:'ĐÃ KHÓA',mod:'MOD',admin:'ADMIN',user_posts:'{n} bài'},
+ja:{name:'日本語',boards:'掲示板',no_boards:'まだ掲示板がありません。',loading:'読み込み中...',load_fail:'読み込みに失敗しました。',board_404:'掲示板が見つかりません。',thread_404:'スレッドが見つかりません。',no_threads:'まだスレッドがありません。最初の投稿者になりましょう！',new_thread:'＋ 新しいスレッド',back_boards:'← すべての掲示板',back:'← 戻る',threads:'スレッド',posts:'投稿',last_active:'最終活動',never:'投稿なし',replies:'返信',last_by:'最後の投稿：',page:'{p}ページ / {t}ページ',prev:'前へ',next:'次へ',views:'閲覧数',lock:'ロック',unlock:'ロック解除',pin:'固定',unpin:'固定解除',del_thread:'スレッドを削除',edited:'編集済み',reply_h:'返信',reply_ph:'返信を書いてください...',attach:'添付',post_reply:'返信を投稿',login_link:'ゲーム',login_msg:'{link}からログインして返信してください。',locked_msg:'スレッドはロックされています。',new_thread_h:'新しいスレッド',in_board:'{name}に',title_lbl:'スレッドタイトル',title_ph:'スレッドタイトル...',content_lbl:'内容',post_ph:'投稿内容を書いてください...',post_btn:'スレッドを作成',required:'タイトルと内容は必須です。',edit:'編集',del:'削除',save:'保存',cancel:'キャンセル',not_logged:'未ログイン',go_game:'← ゲーム',login_game:'ゲームでログイン',del_post_q:'この投稿を削除しますか？',del_thread_q:'スレッド全体を削除しますか？この操作は取り消せません。',just_now:'たった今',m_ago:'{n}分前',h_ago:'{n}時間前',d_ago:'{n}日前',pinned:'固定済み',locked:'ロック済み',mod:'MOD',admin:'管理者',user_posts:'{n}投稿'},
+zh:{name:'中文',boards:'论坛',no_boards:'暂无板块。',loading:'加载中...',load_fail:'加载失败。',board_404:'未找到板块。',thread_404:'未找到帖子。',no_threads:'暂无帖子，快来发第一帖吧！',new_thread:'＋ 新帖子',back_boards:'← 所有板块',back:'← 返回',threads:'帖子',posts:'回复',last_active:'最后活动',never:'无回复',replies:'回复',last_by:'最后由',page:'第{p}页 / 共{t}页',prev:'上一页',next:'下一页',views:'浏览',lock:'锁定',unlock:'解锁',pin:'置顶',unpin:'取消置顶',del_thread:'删除帖子',edited:'已编辑',reply_h:'回复',reply_ph:'写下你的回复...',attach:'附件',post_reply:'发送回复',login_link:'游戏',login_msg:'请通过{link}登录以回复。',locked_msg:'帖子已锁定。',new_thread_h:'新帖子',in_board:'在{name}中',title_lbl:'帖子标题',title_ph:'帖子标题...',content_lbl:'内容',post_ph:'写下你的帖子...',post_btn:'发布帖子',required:'标题和内容为必填项。',edit:'编辑',del:'删除',save:'保存',cancel:'取消',not_logged:'未登录',go_game:'← 游戏',login_game:'在游戏中登录',del_post_q:'删除这条回复？',del_thread_q:'删除整个帖子？此操作无法撤销。',just_now:'刚刚',m_ago:'{n}分钟前',h_ago:'{n}小时前',d_ago:'{n}天前',pinned:'已置顶',locked:'已锁定',mod:'MOD',admin:'管理员',user_posts:'{n}回复'}
+};
+
+var LANG_BROWSER_MAP = {
+  'hu':'hu','de':'de','fr':'fr','es':'es','pt-BR':'pt','pt-PT':'pt_pt','pt':'pt',
+  'it':'it','ru':'ru','uk':'uk','pl':'pl','cs':'cs','sk':'sk','ro':'ro',
+  'nl':'nl','da':'da','sv':'sv','no':'no','nb':'no','nn':'no','fi':'fi',
+  'el':'el','bg':'bg','tr':'tr','id':'id','vi':'vi','ja':'ja','zh':'zh',
+  'zh-CN':'zh','zh-TW':'zh'
+};
+
+var curLang = 'en';
+
+function t(key, vars) {
+    var s = (LANGS[curLang] || LANGS.en)[key];
+    if (s === undefined) s = LANGS.en[key];
+    if (s === undefined) s = key;
+    if (vars) s = s.replace(/\{(\w+)\}/g, function(_, k) { return vars[k] !== undefined ? vars[k] : '{'+k+'}'; });
+    return s;
+}
+
+function initLang() {
+    var saved = localStorage.getItem('unoForumLang');
+    if (saved && LANGS[saved]) { curLang = saved; }
+    else {
+        var bl = (navigator.language || 'en').replace('_','-');
+        var found = LANG_BROWSER_MAP[bl] || LANG_BROWSER_MAP[bl.split('-')[0]];
+        if (found && LANGS[found]) curLang = found;
+    }
+    // Populate selector
+    var sel = document.getElementById('f-lang-sel');
+    Object.keys(LANGS).forEach(function(k) {
+        var o = document.createElement('option');
+        o.value = k; o.textContent = LANGS[k].name;
+        if (k === curLang) o.selected = true;
+        sel.appendChild(o);
+    });
+    document.documentElement.lang = curLang;
+}
+
+function setLang(code) {
+    if (!LANGS[code]) return;
+    curLang = code;
+    localStorage.setItem('unoForumLang', code);
+    document.documentElement.lang = code;
+    route();
+    renderUserBar();
+}
+
+/* ── UTILS ──────────────────────────────────────────────────────────────── */
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function relTime(ms){
+    if(!ms) return '';
+    var d=Date.now()-ms;
+    if(d<60000) return t('just_now');
+    if(d<3600000) return t('m_ago',{n:Math.floor(d/60000)});
+    if(d<86400000) return t('h_ago',{n:Math.floor(d/3600000)});
+    if(d<604800000) return t('d_ago',{n:Math.floor(d/86400000)});
+    return new Date(ms).toLocaleDateString();
+}
+function fmtDate(ms){ return ms?new Date(ms).toLocaleString():''; }
+function authHdr(){ var tok=localStorage.getItem('unoAuthToken'); return tok?{Authorization:'Bearer '+tok}:{}; }
+function jsonHdr(){ return Object.assign({'Content-Type':'application/json'},authHdr()); }
+function fmtSize(b){ if(b<1024) return b+'B'; if(b<1048576) return (b/1024).toFixed(1)+'KB'; return (b/1048576).toFixed(1)+'MB'; }
+function roleLabel(r){
+    if(r>=2) return ' <span class="f-role-admin">'+t('admin')+'</span>';
+    if(r>=1) return ' <span class="f-role-mod">'+t('mod')+'</span>';
+    return '';
+}
+
+/* ── MARKDOWN ───────────────────────────────────────────────────────────── */
+function renderMd(raw){
+    if(!raw) return '';
+    var parts=[],last=0,m;
+    var cRx=/```(\w*)\n?([\s\S]*?)```/g;
+    while((m=cRx.exec(raw))!==null){
+        parts.push({t:'text',v:raw.slice(last,m.index)});
+        parts.push({t:'code',v:m[2],lang:m[1]});
+        last=m.index+m[0].length;
+    }
+    parts.push({t:'text',v:raw.slice(last)});
+    return parts.map(function(p){ return p.t==='code'?'<pre><code>'+esc(p.v.trim())+'</code></pre>':renderInline(p.v); }).join('');
+}
+function safeUrl(u){ return /^javascript:/i.test((u||'').trim())?'#':u; }
+function renderInline(raw){
+    var codes=[],t2=raw;
+    t2=t2.replace(/`([^`\n]+?)`/g,function(_,c){ codes.push(c); return '\x00C'+(codes.length-1)+'\x00'; });
+    t2=esc(t2);
+    t2=t2.replace(/\x00C(\d+)\x00/g,function(_,i){ return '<code>'+esc(codes[i])+'</code>'; });
+    t2=t2.replace(/^(&gt;) ?(.*)/gm,'<blockquote>$2</blockquote>');
+    t2=t2.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+    t2=t2.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+    t2=t2.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+    t2=t2.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    t2=t2.replace(/__(.+?)__/g,'<strong>$1</strong>');
+    t2=t2.replace(/\*([^\n*]+?)\*/g,'<em>$1</em>');
+    t2=t2.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,function(_,alt,url){ return '<img src="'+safeUrl(url)+'" alt="'+alt+'" style="max-width:100%;border-radius:4px;margin:4px 0">'; });
+    t2=t2.replace(/\[([^\]]+)\]\(([^)]+)\)/g,function(_,txt,url){ return '<a href="'+safeUrl(url)+'" target="_blank" rel="noopener">'+txt+'</a>'; });
+    t2=t2.replace(/\n\n+/g,'</p><p>');
+    t2=t2.replace(/\n/g,'<br>');
+    return '<p>'+t2+'</p>';
+}
+
+/* ── TOOLBAR ────────────────────────────────────────────────────────────── */
+function toolbarHtml(taId){
+    var btns=[['<b>B</b>','bold'],['<i>I</i>','italic'],['`code`','icode'],['```','cblock'],['link','link'],['img','img'],['&gt;quote','quote']];
+    return '<div class="f-toolbar">'+btns.map(function(b){ return '<button type="button" class="f-tb-btn" onclick="tb(\''+taId+'\',\''+b[1]+'\')">'+b[0]+'</button>'; }).join('')+'</div>';
+}
+function tb(id,action){
+    var ta=document.getElementById(id); if(!ta) return;
+    var s=ta.selectionStart,e=ta.selectionEnd,sel=ta.value.slice(s,e);
+    var ins='',cur=0;
+    switch(action){
+        case 'bold':  ins='**'+(sel||'bold')+'**';cur=sel?0:-2;break;
+        case 'italic':ins='*'+(sel||'italic')+'*';cur=sel?0:-1;break;
+        case 'icode': ins='`'+(sel||'code')+'`';cur=sel?0:-1;break;
+        case 'cblock':ins='```\n'+(sel||'code')+'\n```';cur=sel?0:-4;break;
+        case 'link':  ins='['+(sel||'text')+'](https://)';cur=-1;break;
+        case 'img':   ins='!['+(sel||'alt')+'](https://)';cur=-1;break;
+        case 'quote': ins='> '+(sel||'quote');cur=0;break;
+    }
+    ta.value=ta.value.slice(0,s)+ins+ta.value.slice(e);
+    var p=s+ins.length+cur; ta.setSelectionRange(p,p); ta.focus();
+}
+
+/* ── AUTH ───────────────────────────────────────────────────────────────── */
+var me=null;
+function initAuth(){
+    var tok=localStorage.getItem('unoAuthToken');
+    if(!tok){ renderUserBar(); return Promise.resolve(); }
+    return fetch('/api/auth/me',{headers:{Authorization:'Bearer '+tok}})
+        .then(function(r){ return r.ok?r.json():null; })
+        .then(function(d){ me=d&&d.id?d:null; renderUserBar(); })
+        .catch(function(){ me=null; renderUserBar(); });
+}
+function renderUserBar(){
+    var el=document.getElementById('f-user');
+    if(me){
+        el.innerHTML='<span class="f-uname">'+esc(me.username)+'</span>'
+            +(me.is_admin>=2?'<span class="f-role-admin">'+t('admin')+'</span>':me.is_admin>=1?'<span class="f-role-mod">'+t('mod')+'</span>':'')
+            +'<a href="/" class="f-game-link">'+t('go_game')+'</a>';
+    } else {
+        el.innerHTML='<span style="font-size:11px;color:rgba(212,205,164,0.35)">'+t('not_logged')+'</span>'
+            +'<a href="/" class="f-game-link">'+t('login_game')+'</a>';
+    }
+}
+function setBreadcrumb(html){ document.getElementById('f-breadcrumb').innerHTML=html||''; }
+
+/* ── ROUTING ────────────────────────────────────────────────────────────── */
+function route(){
+    var h=location.hash||'#/',m;
+    if(h==='#/'||h==='#') return loadBoards();
+    m=h.match(/^#\/board\/(\d+)(?:\/(\d+))?$/); if(m) return loadThreads(+m[1],+m[2]||1);
+    m=h.match(/^#\/thread\/(\d+)(?:\/(\d+))?$/); if(m) return loadThread(+m[1],+m[2]||1);
+    m=h.match(/^#\/new\/(\d+)$/); if(m) return loadNewThread(+m[1]);
+    loadBoards();
+}
+window.addEventListener('hashchange',route);
+
+/* ── APP ────────────────────────────────────────────────────────────────── */
+function setApp(html){ document.getElementById('f-app').innerHTML=html; }
+
+/* ── BOARDS ─────────────────────────────────────────────────────────────── */
+function loadBoards(){
+    document.title='UNO Forum'; setBreadcrumb('');
+    setApp('<div class="f-loading">'+t('loading')+'</div>');
+    fetch('/api/forum/boards').then(function(r){ return r.json(); }).then(showBoards)
+        .catch(function(){ setApp('<div class="f-error">'+t('load_fail')+'</div>'); });
+}
+function showBoards(boards){
+    if(!boards.length){ setApp('<div class="f-empty">'+t('no_boards')+'</div>'); return; }
+    var icons=['🎮','🏆','💬','🃏','🔥','⭐','📢','🎯'];
+    var html='<div class="f-section-title">'+t('boards')+'</div>';
+    html+=boards.map(function(b,i){
+        var last=b.last_activity?relTime(b.last_activity):t('never');
+        return '<a class="board-card" href="#/board/'+b.id+'">'
+            +'<div class="board-icon">'+icons[i%icons.length]+'</div>'
+            +'<div class="board-info"><div class="board-name">'+esc(b.name)+'</div>'
+            +(b.description?'<div class="board-desc">'+esc(b.description)+'</div>':'')
+            +'<div class="board-meta"><span>'+b.thread_count+' '+t('threads')+'</span><span>'+b.post_count+' '+t('posts')+'</span></div></div>'
+            +'<div class="board-last">'+t('last_active')+'<br>'+last+'</div></a>';
+    }).join('');
+    setApp(html);
+}
+
+/* ── THREADS ────────────────────────────────────────────────────────────── */
+var _curBoard=null;
+function loadThreads(boardId,page){
+    setApp('<div class="f-loading">'+t('loading')+'</div>');
+    fetch('/api/forum/boards/'+boardId+'/threads?page='+(page||1))
+        .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+        .then(function(d){ _curBoard=d.board; showThreads(d); })
+        .catch(function(){ setApp('<div class="f-error">'+t('board_404')+'</div>'); });
+}
+function showThreads(d){
+    var board=d.board,threads=d.threads,page=d.page,pages=d.pages;
+    document.title='UNO Forum — '+board.name;
+    setBreadcrumb('<a href="#/">Forum</a> › '+esc(board.name));
+    var html='<button class="f-back" onclick="location.hash=\'#/\'">'+t('back_boards')+'</button>'
+        +'<div class="f-board-hdr"><div class="f-board-hdr-info">'
+        +'<div class="f-page-title">'+esc(board.name)+'</div>'
+        +(board.description?'<div class="f-page-desc">'+esc(board.description)+'</div>':'')
+        +'</div>'+(me?'<a href="#/new/'+board.id+'" class="btn btn-gold">'+t('new_thread')+'</a>':'')+'</div>';
+    if(!threads.length){ html+='<div class="f-empty">'+t('no_threads')+'</div>'; }
+    else {
+        html+='<div class="thread-list">'+threads.map(function(th){
+            return '<a class="thread-row" href="#/thread/'+th.id+'">'
+                +'<div class="thread-flags">'+(th.pinned?'<span class="flag-pin">📌</span>':'')+(th.locked?'<span class="flag-lock">🔒</span>':'')+'</div>'
+                +'<div class="thread-main"><div class="thread-title">'+esc(th.title)
+                +(th.pinned?'<span class="badge-pinned">'+t('pinned')+'</span>':'')
+                +(th.locked?'<span class="badge-locked">'+t('locked')+'</span>':'')
+                +'</div><div class="thread-sub">by <span class="t-author">'+esc(th.username)+'</span>'
+                +roleLabel(th.is_admin||0)+' · '+relTime(th.last_post_at)
+                +(th.last_poster&&th.last_poster!==th.username?' · '+t('last_by')+' '+esc(th.last_poster):'')
+                +'</div></div>'
+                +'<div class="thread-stats"><span class="ts-num">'+th.reply_count+'</span>'+t('replies')+'</div></a>';
+        }).join('')+'</div>';
+    }
+    html+=pagHtml(pages,page,function(p){ return '#/board/'+board.id+'/'+p; });
+    setApp(html);
+}
+
+/* ── THREAD VIEW ────────────────────────────────────────────────────────── */
+var _curThread=null,_curPosts=null;
+function loadThread(threadId,page){
+    setApp('<div class="f-loading">'+t('loading')+'</div>');
+    fetch('/api/forum/threads/'+threadId+'?page='+(page||1),{headers:authHdr()})
+        .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+        .then(function(d){ _curThread=d.thread; _curPosts=d; showThread(d); })
+        .catch(function(){ setApp('<div class="f-error">'+t('thread_404')+'</div>'); });
+}
+function showThread(d){
+    var thread=d.thread,posts=d.posts,page=d.page,pages=d.pages,uid=d.currentUserId,urole=d.currentUserRole;
+    document.title='UNO Forum — '+thread.title;
+    setBreadcrumb('<a href="#/">Forum</a> › <a href="#/board/'+thread.board_id+'">'+esc(thread.board_name||'')+'</a> › '+esc(thread.title).slice(0,40));
+    var canMod=(urole||0)>=1,canAdmin=(urole||0)>=2;
+    var html='<button class="f-back" onclick="location.hash=\'#/board/'+thread.board_id+'\'">'+t('back')+'</button>'
+        +'<div class="thread-view-hdr"><div class="thread-view-title">'+esc(thread.title)
+        +(thread.pinned?'<span class="badge-pinned" style="font-size:11px">'+t('pinned')+'</span>':'')
+        +(thread.locked?'<span class="badge-locked" style="font-size:11px">'+t('locked')+'</span>':'')
+        +'</div><div class="thread-view-meta"><span>by '+esc(thread.username)+roleLabel(thread.is_admin||0)+'</span>'
+        +'<span>'+fmtDate(thread.created_at)+'</span><span>'+thread.views+' '+t('views')+'</span></div>'
+        +(canMod?'<div class="thread-mod-bar">'
+            +'<button class="btn btn-sm btn-dim" onclick="actLock('+thread.id+','+!!thread.locked+')">'+(thread.locked?t('unlock'):t('lock'))+'</button>'
+            +(canAdmin?'<button class="btn btn-sm btn-dim" onclick="actPin('+thread.id+','+!!thread.pinned+')">'+(thread.pinned?t('unpin'):t('pin'))+'</button>':'')
+            +'<button class="btn btn-sm btn-red" onclick="actDelThread('+thread.id+',\''+thread.board_id+'\')">'+t('del_thread')+'</button></div>':'')
+        +'</div>';
+    html+=posts.map(function(p,i){
+        var isOwn=(uid&&p.user_id===uid),canEdit=(isOwn||canMod);
+        var av=p.has_avatar?'/api/profile/avatar/'+p.user_id:'/img/default.png';
+        return '<div class="post-card'+(i===0&&page===1?' post-first':'')+'" id="post-'+p.id+'">'
+            +'<div class="post-meta"><img class="post-avatar" src="'+av+'" onerror="this.src=\'/img/default.png\'"/>'
+            +'<div class="post-author-info"><div class="post-uname">'+esc(p.username)+roleLabel(p.is_admin||0)+'</div>'
+            +'<div class="post-stats">'+t('user_posts',{n:p.user_post_count})+'</div></div>'
+            +'<div class="post-date">'+relTime(p.created_at)+(p.edited_at?'<div class="post-edited">'+t('edited')+' '+relTime(p.edited_at)+'</div>':'')+'</div></div>'
+            +'<div class="post-body"><div class="post-content" id="pcontent-'+p.id+'">'+renderMd(p.content)+'</div></div>'
+            +(p.attachments&&p.attachments.length?'<div class="post-attachments">'+p.attachments.map(function(a){
+                return /^image\//i.test(a.mime_type)
+                    ?'<a href="/api/forum/attachment/'+a.id+'" target="_blank"><img class="post-att-img" src="/api/forum/attachment/'+a.id+'" alt="'+esc(a.original_name)+'"></a>'
+                    :'<a class="post-att-file" href="/api/forum/attachment/'+a.id+'" target="_blank">📎 '+esc(a.original_name)+' ('+fmtSize(a.size)+')</a>';
+            }).join('')+'</div>':'')
+            +'<div class="post-actions"><button class="like-btn'+(p.liked?' liked':'')+'" id="like-'+p.id+'" onclick="actLike('+p.id+')" '+(uid?'':'disabled')+'>'
+            +'👍 <span id="lc-'+p.id+'">'+p.likes+'</span></button>'
+            +(canEdit?'<div class="post-mod-actions">'
+                +(isOwn||canMod?'<button class="btn btn-xs btn-dim" onclick="actEdit('+p.id+')">'+t('edit')+'</button>':'')
+                +'<button class="btn btn-xs btn-red" onclick="actDelPost('+p.id+','+thread.id+','+page+')">'+t('del')+'</button>'
+                +'</div>':'')
+            +'</div></div>';
+    }).join('');
+    html+=pagHtml(pages,page,function(p){ return '#/thread/'+thread.id+'/'+p; });
+    html+='<div class="reply-section"><h3>'+t('reply_h')+'</h3>';
+    if(!uid) html+='<div class="login-prompt">'+t('login_msg',{link:'<a href="/">'+t('login_link')+'</a>'})+'</div>';
+    else if(thread.locked&&!canMod) html+='<div class="login-prompt">'+t('locked_msg')+'</div>';
+    else html+=replyFormHtml(thread.id);
+    html+='</div>';
+    setApp(html);
+}
+function replyFormHtml(threadId){
+    return '<div class="f-editor-wrap">'+toolbarHtml('reply-ta')
+        +'<textarea id="reply-ta" placeholder="'+t('reply_ph')+'"></textarea>'
+        +'<div class="f-editor-footer"><div class="f-att-list" id="reply-att-list"></div>'
+        +'<label class="btn btn-sm btn-dim" style="cursor:pointer">📎 '+t('attach')
+        +'<input type="file" style="display:none" onchange="uploadAtt(this,\'reply\')" accept="image/*,.zip,.rar,.7z,.tar,.gz"/></label>'
+        +'<button class="btn btn-gold btn-sm" onclick="actReply('+threadId+')">'+t('post_reply')+'</button>'
+        +'</div></div>';
+}
+
+/* ── NEW THREAD ─────────────────────────────────────────────────────────── */
+function loadNewThread(boardId){
+    fetch('/api/forum/boards/'+boardId).then(function(r){ return r.ok?r.json():null; }).then(function(board){
+        if(!board){ setApp('<div class="f-error">'+t('board_404')+'</div>'); return; }
+        if(!me){ location.hash='#/board/'+boardId; return; }
+        _curBoard=board;
+        document.title='UNO Forum — '+t('new_thread_h');
+        setBreadcrumb('<a href="#/">Forum</a> › <a href="#/board/'+boardId+'">'+esc(board.name)+'</a> › '+t('new_thread_h'));
+        var html='<button class="f-back" onclick="location.hash=\'#/board/'+boardId+'\'">'+t('back')+'</button>'
+            +'<div class="f-form-card"><div class="f-page-title" style="margin-bottom:16px">'+t('new_thread_h')+'</div>'
+            +'<div style="color:rgba(212,205,164,0.45);font-size:12px;margin-bottom:14px">'+t('in_board',{name:esc(board.name)})+'</div>'
+            +'<label class="f-form-label">'+t('title_lbl')+'</label>'
+            +'<input class="f-title-input" id="nt-title" type="text" maxlength="200" placeholder="'+t('title_ph')+'">'
+            +'<label class="f-form-label" style="margin-top:10px">'+t('content_lbl')+'</label>'
+            +'<div class="f-editor-wrap">'+toolbarHtml('nt-body')
+            +'<textarea id="nt-body" placeholder="'+t('post_ph')+'"></textarea>'
+            +'<div class="f-editor-footer"><div class="f-att-list" id="nt-att-list"></div>'
+            +'<label class="btn btn-sm btn-dim" style="cursor:pointer">📎 '+t('attach')
+            +'<input type="file" style="display:none" onchange="uploadAtt(this,\'new\')" accept="image/*,.zip,.rar,.7z,.tar,.gz"/></label>'
+            +'<button class="btn btn-gold" onclick="actCreateThread('+boardId+')">'+t('post_btn')+'</button>'
+            +'</div></div>'
+            +'<div class="f-error" id="nt-err" style="display:none"></div></div>';
+        setApp(html);
+    });
+}
+
+/* ── PAGINATION ─────────────────────────────────────────────────────────── */
+function pagHtml(pages,page,hashFn){
+    if(pages<=1) return '';
+    var html='<div class="f-pag">';
+    if(page>1) html+='<a class="btn btn-sm btn-dim" href="'+hashFn(page-1)+'">'+t('prev')+'</a>';
+    html+='<span class="f-pag-info">'+t('page',{p:page,t:pages})+'</span>';
+    if(page<pages) html+='<a class="btn btn-sm btn-dim" href="'+hashFn(page+1)+'">'+t('next')+'</a>';
+    return html+'</div>';
+}
+
+/* ── ACTIONS ────────────────────────────────────────────────────────────── */
+var _pendingAtt=[];
+function actLike(postId){
+    if(!me) return;
+    fetch('/api/forum/posts/'+postId+'/like',{method:'POST',headers:jsonHdr()}).then(function(r){return r.json();}).then(function(d){
+        if(d.ok){
+            var btn=document.getElementById('like-'+postId),cnt=document.getElementById('lc-'+postId);
+            if(btn){d.liked?btn.classList.add('liked'):btn.classList.remove('liked');}
+            if(cnt) cnt.textContent=d.count;
+        }
+    });
+}
+function actEdit(postId){
+    var contentDiv=document.getElementById('pcontent-'+postId); if(!contentDiv) return;
+    var raw='';
+    if(_curPosts&&_curPosts.posts){var p=_curPosts.posts.find(function(x){return x.id===postId;});if(p)raw=p.content;}
+    contentDiv.innerHTML='<div class="post-edit-wrap">'+toolbarHtml('pedit-'+postId)
+        +'<textarea id="pedit-'+postId+'" style="min-height:100px;width:100%">'+esc(raw)+'</textarea>'
+        +'<div class="post-edit-actions">'
+        +'<button class="btn btn-gold btn-sm" onclick="actSaveEdit('+postId+')">'+t('save')+'</button>'
+        +'<button class="btn btn-dim btn-sm" onclick="actCancelEdit('+postId+')">'+t('cancel')+'</button>'
+        +'</div></div>';
+}
+function actSaveEdit(postId){
+    var ta=document.getElementById('pedit-'+postId); if(!ta) return;
+    var content=ta.value.trim(); if(!content) return;
+    fetch('/api/forum/posts/'+postId,{method:'PUT',headers:jsonHdr(),body:JSON.stringify({content:content})})
+        .then(function(r){return r.json();}).then(function(d){
+            if(d.ok){
+                if(_curPosts&&_curPosts.posts){var p=_curPosts.posts.find(function(x){return x.id===postId;});if(p){p.content=content;p.edited_at=Date.now();}}
+                var el=document.getElementById('pcontent-'+postId); if(el) el.innerHTML=renderMd(content);
+            }
+        });
+}
+function actCancelEdit(postId){
+    var raw='';
+    if(_curPosts&&_curPosts.posts){var p=_curPosts.posts.find(function(x){return x.id===postId;});if(p)raw=p.content;}
+    var el=document.getElementById('pcontent-'+postId); if(el) el.innerHTML=renderMd(raw);
+}
+function actDelPost(postId,threadId,page){
+    if(!confirm(t('del_post_q'))) return;
+    fetch('/api/forum/posts/'+postId,{method:'DELETE',headers:authHdr()}).then(function(r){return r.json();}).then(function(d){if(d.ok)loadThread(threadId,page);});
+}
+function actReply(threadId){
+    var ta=document.getElementById('reply-ta'); if(!ta||!ta.value.trim()) return;
+    var attIds=_pendingAtt.map(function(a){return a.id;});
+    fetch('/api/forum/threads/'+threadId+'/posts',{method:'POST',headers:jsonHdr(),body:JSON.stringify({content:ta.value.trim(),attachments:attIds})})
+        .then(function(r){return r.json();}).then(function(d){if(d.ok){_pendingAtt=[];if(_curThread)loadThread(_curThread.id,9999);}});
+}
+function actCreateThread(boardId){
+    var title=(document.getElementById('nt-title')||{}).value||'';
+    var body=(document.getElementById('nt-body')||{}).value||'';
+    var errEl=document.getElementById('nt-err');
+    if(!title.trim()||!body.trim()){if(errEl){errEl.style.display='';errEl.textContent=t('required');}return;}
+    var attIds=_pendingAtt.map(function(a){return a.id;});
+    fetch('/api/forum/boards/'+boardId+'/threads',{method:'POST',headers:jsonHdr(),body:JSON.stringify({title:title.trim(),content:body.trim(),attachments:attIds})})
+        .then(function(r){return r.json();}).then(function(d){if(d.ok){_pendingAtt=[];location.hash='#/thread/'+d.id;}else if(errEl){errEl.style.display='';errEl.textContent=d.error||t('load_fail');}});
+}
+function actLock(threadId){
+    fetch('/api/forum/threads/'+threadId+'/lock',{method:'PUT',headers:jsonHdr()}).then(function(r){return r.json();}).then(function(d){if(d.ok)loadThread(threadId,1);});
+}
+function actPin(threadId){
+    fetch('/api/forum/threads/'+threadId+'/pin',{method:'PUT',headers:jsonHdr()}).then(function(r){return r.json();}).then(function(d){if(d.ok)loadThread(threadId,1);});
+}
+function actDelThread(threadId,boardId){
+    if(!confirm(t('del_thread_q'))) return;
+    fetch('/api/forum/threads/'+threadId,{method:'DELETE',headers:authHdr()}).then(function(r){return r.json();}).then(function(d){if(d.ok)location.hash='#/board/'+boardId;});
+}
+function uploadAtt(input,target){
+    var file=input.files[0]; if(!file) return; input.value='';
+    var fd=new FormData(); fd.append('file',file);
+    fetch('/api/forum/attachments/upload',{method:'POST',headers:authHdr(),body:fd})
+        .then(function(r){return r.json();}).then(function(d){if(d.ok){_pendingAtt.push({id:d.id,name:d.name,size:d.size,mime:d.mime});renderPendingAtts(target);}});
+}
+function removeAtt(idx,target){_pendingAtt.splice(idx,1);renderPendingAtts(target);}
+function renderPendingAtts(target){
+    var el=document.getElementById(target==='new'?'nt-att-list':'reply-att-list'); if(!el) return;
+    el.innerHTML=_pendingAtt.map(function(a,i){
+        return '<span class="f-att-chip">'+esc(a.name)+'<button type="button" onclick="removeAtt('+i+',\''+target+'\')">&#10005;</button></span>';
+    }).join('');
+}
+
+/* ── INIT ───────────────────────────────────────────────────────────────── */
+initLang();
+initAuth().then(route);
+</script>
+</body>
+</html>

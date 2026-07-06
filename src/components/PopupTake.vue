@@ -7,11 +7,11 @@
         </template>
         <template v-slot:bottomRow>
             <div class="button-float">
-                <Button faIcon="arrow-circle-up" :clickHandler="leave">Place</Button>
+                <Button faIcon="arrow-circle-up" :clickHandler="leave">{{ t('place') }}</Button>
             </div>
             <div class="button-float">
-                <Button faIcon="arrow-circle-down" :clickHandler="takeHandler">Take</Button>
-            </div>            
+                <Button faIcon="arrow-circle-down" :clickHandler="takeHandler">{{ t('take') }}</Button>
+            </div>
         </template>        
     </Popup>
 </template>
@@ -19,14 +19,16 @@
 <script>
 
     import Popup from "./Popup"
-    import CardTemplate from "./CardTemplate" 
+    import CardTemplate from "./CardTemplate"
     import Button from "./Button"
+    import { lang } from '../lang/index.js';
 
     export default {
         name: "PopupTake",
         props:['takeHandler','leaveHandler','card'],
         components: {Popup, CardTemplate, Button},
         methods:{
+            t: function(key, vars) { return lang.t(key, vars); },
             leave:function(){
                 this.leaveHandler(this.card.id);
             }

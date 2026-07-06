@@ -1,4 +1,5 @@
 let Client = require('../Client.js');
+let CardDefs = require('./CardDefs.js');
 
 /**
  * Client class specific to UNO game
@@ -12,6 +13,13 @@ module.exports = class UNOClient extends Client{
         this.cards = [];
         this.score = [];
         this.takeOrLeave = false;
+        this.isAI = false;
+        this.aiDifficulty = 'easy';
+        this.disconnected = false;
+        this.afkStreak = 0;
+        this.brEliminated = false;
+        this.brRank = 0;
+        this.brScore = 0;
     }
     getScore(){
         return this.score;
@@ -24,6 +32,8 @@ module.exports = class UNOClient extends Client{
                 score += 50;
             } else if(c2 === 'p' || c2 === 'n' || c2 === 'r'){
                 score += 20;
+            } else if(CardDefs[c2]){
+                score += CardDefs[c2].scoreValue;
             } else {
                 score += parseInt(c2);
             }
@@ -65,7 +75,7 @@ module.exports = class UNOClient extends Client{
     removeCard(card){
         let index = this.cards.findIndex(function(elem){return elem.getId() === card.getId()});
         if(index >= 0){
-            let deleted = this.cards.splice(index, 1);
+            this.cards.splice(index, 1);
             return true;
         }
         return false;
@@ -109,10 +119,13 @@ module.exports = class UNOClient extends Client{
     static calculateScores(unoClients){
         if(Array.isArray(unoClients)){
             unoClients.forEach(element => {
-                if(element instanceof UNOClient){
+                // Already-eliminated clients (Battle Royale, or Nextgen hoarder
+                // elimination) already got their score entry from _brEliminatePlayer —
+                // scoring them again here would double-count the round for them.
+                if(element instanceof UNOClient && !element.brEliminated){
                     element.insertScore(element.calculateScore());
                 }
             });
         }
-    }        
+    }
 };

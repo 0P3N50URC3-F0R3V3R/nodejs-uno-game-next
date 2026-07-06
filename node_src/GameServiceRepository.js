@@ -13,4 +13,7 @@ module.exports = class GameServiceRepository{
     findById(id){
         return this.sevices.find(function(elem){return elem.id === id;});
     }
+    remove(id){
+        this.sevices = this.sevices.filter(function(s){ return s.id !== id; });
+    }
 };

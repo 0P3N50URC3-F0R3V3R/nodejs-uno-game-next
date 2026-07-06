@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNO Admin</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1108; color: #d4cda4; font-family: "Trebuchet MS", sans-serif; min-height: 100vh; }
+#login-screen, #admin-screen { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+h1 { color: #ffdd00; font-size: 22px; letter-spacing: 3px; margin-bottom: 6px; }
+.sub { color: rgba(212,205,164,0.4); font-size: 11px; letter-spacing: 1px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+.card { background: rgba(0,0,0,0.5); border: 1px solid rgba(154,101,21,0.4); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+input[type=text], input[type=password], input[type=number], input[type=email] {
+    background: rgba(0,0,0,0.5); border: 1px solid rgba(154,101,21,0.6); border-radius: 4px; color: #fff;
+    font-size: 13px; padding: 6px 10px; outline: none; width: 100%; margin-bottom: 8px; font-family: inherit; }
+input:focus { border-color: #ffb833; }
+button { border-radius: 4px; font-size: 12px; font-weight: bold; letter-spacing: 1px; padding: 6px 14px; cursor: pointer; border: 1px solid; font-family: inherit; transition: background 0.15s; }
+.btn-primary { background: rgba(154,101,21,0.3); border-color: rgba(154,101,21,0.7); color: #ffdd00; }
+.btn-primary:hover { background: rgba(154,101,21,0.55); }
+.btn-danger { background: rgba(180,30,30,0.3); border-color: rgba(220,60,60,0.6); color: #ffaaaa; }
+.btn-danger:hover { background: rgba(220,30,30,0.5); color: #fff; }
+.btn-sm { padding: 3px 10px; font-size: 11px; }
+.error { color: #ff6666; font-size: 12px; margin-top: 6px; }
+.success { color: #6de86d; font-size: 12px; margin-top: 6px; }
+table { width: 100%; border-collapse: collapse; }
+th { color: rgba(212,205,164,0.5); font-size: 10px; letter-spacing: 1.5px; text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(154,101,21,0.3); }
+td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; vertical-align: middle; }
+tr:hover td { background: rgba(154,101,21,0.08); }
+.td-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; align-items: center; justify-content: center; }
+.modal-bg.open { display: flex; }
+.modal { background: #161a10; border: 1px solid rgba(154,101,21,0.5); border-radius: 8px; padding: 24px; width: 380px; max-height: 90vh; overflow-y: auto; }
+.modal h3 { color: #ffdd00; font-size: 14px; letter-spacing: 1px; margin-bottom: 14px; }
+.modal-btns { display: flex; gap: 8px; margin-top: 10px; }
+.lv-badge { background: rgba(109,232,109,0.15); border: 1px solid rgba(109,232,109,0.3); color: #6de86d; border-radius: 3px; padding: 1px 6px; font-size: 11px; font-weight: bold; }
+.xp-text { color: rgba(212,205,164,0.5); font-size: 11px; }
+.av-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(154,101,21,0.4); vertical-align: middle; }
+.stat-row { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.stat-label { color: rgba(212,205,164,0.5); font-size: 11px; width: 140px; flex-shrink: 0; }
+.stat-row input { margin-bottom: 0; flex: 1; }
+.modal-avatar { display: block; width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(154,101,21,0.5); margin: 0 auto 14px; }
+.refresh-tag { color: rgba(212,205,164,0.35); font-size: 10px; }
+.captcha-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.captcha-row svg { border-radius: 4px; border: 1px solid rgba(154,101,21,0.4); flex-shrink: 0; }
+.captcha-row input { margin-bottom: 0; flex: 1; }
+/* ── TABS ── */
+.admin-tabs { display: flex; gap: 0; border-bottom: 1px solid rgba(154,101,21,0.4); margin-bottom: 20px; }
+.admin-tab-btn { background: transparent; border: none; border-bottom: 2px solid transparent; color: rgba(212,205,164,0.4); font-size: 11px; letter-spacing: 1.5px; padding: 8px 18px; cursor: pointer; font-family: inherit; margin-bottom: -1px; transition: color 0.15s; }
+.admin-tab-btn:hover { color: #d4cda4; }
+.admin-tab-btn.active { color: #ffdd00; border-bottom-color: #ffdd00; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+    <h1>UNO ADMIN</h1>
+    <div class="sub">SERVER ADMINISTRATION</div>
+    <div class="card">
+        <input type="password" id="admin-pass" placeholder="Admin password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <div class="captcha-row">
+            <div id="captcha-svg"></div>
+            <input type="text" id="captcha-input" placeholder="Enter code" autocomplete="off" maxlength="8" onkeydown="if(event.key==='Enter')doLogin()"/>
+            <button class="btn-primary btn-sm" onclick="loadCaptcha()" title="Refresh captcha">&#8635;</button>
+        </div>
+        <button class="btn-primary" onclick="doLogin()">LOGIN</button>
+        <div class="error" id="login-error"></div>
+    </div>
+</div>
+
+<div id="admin-screen" style="display:none">
+    <h1>UNO ADMIN</h1>
+    <div class="sub"><span id="user-count">0</span> USERS &nbsp;<span class="refresh-tag">auto-refreshes every 30s</span></div>
+
+    <nav class="admin-tabs">
+        <button class="admin-tab-btn active" onclick="switchTab('users',this)">USERS</button>
+        <button class="admin-tab-btn" onclick="switchTab('server',this)">SERVER SETTINGS</button>
+        <button class="admin-tab-btn" onclick="switchTab('store',this)">STORE</button>
+        <button class="admin-tab-btn" onclick="switchTab('news',this)">NEWS</button>
+        <button class="admin-tab-btn" onclick="switchTab('forum',this)">FORUM</button>
+    </nav>
+
+    <!-- TAB: USERS -->
+    <div class="tab-pane active" id="tab-users">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <button class="btn-primary btn-sm" onclick="loadUsers()">&#8635; REFRESH</button>
+        </div>
+        <div class="card" style="padding:0;overflow-x:auto">
+            <table>
+                <thead><tr><th>ID</th><th>AVATAR</th><th>USERNAME</th><th>EMAIL</th><th>LEVEL / XP</th><th>STATS</th><th>ROLE</th><th>CREATED</th><th>ACTIONS</th></tr></thead>
+                <tbody id="user-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB: SERVER SETTINGS -->
+    <div class="tab-pane" id="tab-server">
+        <div class="card">
+            <div style="font-size:11px;color:rgba(212,205,164,0.5);letter-spacing:1.5px;margin-bottom:14px">SESSION</div>
+            <div class="stat-row">
+                <span class="stat-label">Session expiry (days)</span>
+                <input type="number" id="s-expiry-days" min="1" max="365" style="width:80px;flex:none;margin-bottom:0"/>
+                <button class="btn-primary btn-sm" onclick="saveSettings()">SAVE</button>
+            </div>
+            <div id="settings-msg" style="font-size:12px;margin-top:6px"></div>
+        </div>
+
+        <div class="card">
+            <div style="font-size:11px;color:rgba(212,205,164,0.5);letter-spacing:1.5px;margin-bottom:14px">CHALLENGES</div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <button class="btn-primary" onclick="rerollChallenges('daily')">REROLL DAILY</button>
+                <button class="btn-primary" onclick="rerollChallenges('weekly')">REROLL WEEKLY</button>
+                <span id="reroll-msg" style="font-size:12px"></span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+                <div style="font-size:11px;color:rgba(212,205,164,0.5);letter-spacing:1.5px">GOLD SETTINGS</div>
+                <button class="btn-primary btn-sm" onclick="loadGoldSettings()">&#8635; REFRESH</button>
+                <span id="gold-msg" style="font-size:11px;color:#6de86d"></span>
+            </div>
+            <div id="gold-settings-wrap" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+            <div style="font-size:11px;color:rgba(212,205,164,0.5);letter-spacing:1.5px;margin-bottom:10px;margin-top:4px">BONUS EVENTS <button class="btn-primary btn-sm" style="margin-left:8px" onclick="goldToggleCreate()">+ ADD EVENT</button></div>
+            <div id="gold-event-create" style="display:none;background:rgba(0,0,0,0.3);padding:12px;border-radius:6px;margin-bottom:12px">
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px">
+                    <input type="text" id="ge-name" placeholder="Event name (e.g. Weekend 2x Gold)" />
+                    <input type="number" id="ge-mult" placeholder="Multiplier" value="2" step="0.1" min="1" />
+                </div>
+                <input type="text" id="ge-desc" placeholder="Description (optional)" style="width:100%;margin-bottom:8px" />
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                    <div><label style="font-size:10px;color:#888;display:block;margin-bottom:2px">START</label><input type="datetime-local" id="ge-start" style="width:100%" /></div>
+                    <div><label style="font-size:10px;color:#888;display:block;margin-bottom:2px">END</label><input type="datetime-local" id="ge-end" style="width:100%" /></div>
+                </div>
+                <div style="display:flex;gap:8px">
+                    <button class="btn-primary btn-sm" onclick="goldCreateEvent()">CREATE</button>
+                    <button class="btn-sm" onclick="document.getElementById('gold-event-create').style.display='none'" style="background:transparent;border:1px solid #555;color:#888;border-radius:4px;cursor:pointer;padding:3px 10px;font-size:11px">CANCEL</button>
+                </div>
+            </div>
+            <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Name</th><th>Mult</th><th>Start</th><th>End</th><th>Status</th><th>Active</th><th>Actions</th></tr></thead><tbody id="gold-events-tbody"></tbody></table></div>
+        </div>
+    </div>
+
+    <!-- TAB: STORE -->
+    <div class="tab-pane" id="tab-store">
+        <div class="card">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                <button class="btn-primary btn-sm" onclick="storeSyncFiles()">&#8635; SYNC FILES</button>
+                <button class="btn-primary btn-sm" onclick="storeToggleCreate()">+ ADD ITEM</button>
+                <button class="btn-primary btn-sm" onclick="loadStore()">&#8635; REFRESH</button>
+                <span id="store-msg" style="font-size:11px;color:#6de86d"></span>
+            </div>
+            <div id="store-create-form" style="display:none;background:rgba(0,0,0,0.3);padding:12px;border-radius:6px;margin-bottom:12px">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+                    <select id="sc-type" style="background:rgba(0,0,0,0.5);border:1px solid rgba(154,101,21,0.6);border-radius:4px;color:#fff;padding:6px;font-family:inherit">
+                        <option value="reticle">Reticle</option>
+                        <option value="background">Background</option>
+                        <option value="title">Title</option>
+                        <option value="name_effect">Name Effect</option>
+                        <option value="emoji">Emoji (future)</option>
+                    </select>
+                    <input type="text" id="sc-name" placeholder="Name" />
+                    <input type="number" id="sc-price" placeholder="Price (G)" value="100" />
+                </div>
+                <input type="text" id="sc-filepath" placeholder="file_path (e.g. anim-avatar/xxx.png) — leave blank for title/name_effect" style="width:100%;margin-bottom:6px" />
+                <input type="text" id="sc-desc" placeholder="Description (optional)" style="width:100%;margin-bottom:6px" />
+                <div style="position:relative;margin-bottom:8px">
+                    <input type="text" id="sc-meta" placeholder='Style JSON — Title: {"color":"#f0c040"} | Name Effect: {"cssClass":"name-fire"}' style="width:100%" />
+                    <div style="font-size:9px;color:#666;margin-top:2px">cssClass options: name-fire, name-ice, name-gold, name-rainbow, name-shadow</div>
+                </div>
+                <div style="display:flex;gap:8px">
+                    <button class="btn-primary btn-sm" onclick="storeCreateItem()">CREATE</button>
+                    <button class="btn-sm" onclick="document.getElementById('store-create-form').style.display='none'" style="background:transparent;border:1px solid #555;color:#888;border-radius:4px;cursor:pointer;padding:3px 10px;font-size:11px">CANCEL</button>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+                <input type="text" id="store-search" placeholder="Search name, price, type, description…" oninput="storeSearchChanged()" style="flex:1;min-width:180px;margin-bottom:0" />
+                <span id="store-count" style="font-size:11px;color:#666;white-space:nowrap"></span>
+            </div>
+            <div style="overflow-x:auto">
+                <table id="store-table">
+                    <thead><tr><th>ID</th><th>Type</th><th>Preview</th><th>Name</th><th>Price</th><th>Desc</th><th>Style</th><th>On</th><th>Sort</th><th>Actions</th></tr></thead>
+                    <tbody id="store-tbody"></tbody>
+                </table>
+            </div>
+            <div id="store-pagination" style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:12px;flex-wrap:wrap"></div>
+        </div>
+    </div>
+
+    <!-- TAB: FORUM BOARDS -->
+    <div class="tab-pane" id="tab-forum">
+        <div class="card">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+                <button class="btn-primary btn-sm" onclick="forumToggleCreate()">+ NEW BOARD</button>
+                <button class="btn-primary btn-sm" onclick="loadForumBoards()">&#8635; REFRESH</button>
+                <span id="forum-msg" style="font-size:11px;color:#6de86d"></span>
+            </div>
+            <div id="forum-create-form" style="display:none;background:rgba(0,0,0,0.3);padding:12px;border-radius:6px;margin-bottom:12px">
+                <input type="hidden" id="fb-id" value=""/>
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px">
+                    <input type="text" id="fb-name" placeholder="Board name" maxlength="100"/>
+                    <input type="number" id="fb-sort" placeholder="Sort order" value="0"/>
+                </div>
+                <textarea id="fb-desc" placeholder="Description (optional)" style="width:100%;min-height:60px;background:rgba(0,0,0,0.5);border:1px solid rgba(154,101,21,0.6);border-radius:4px;color:#d4cda4;font-size:13px;padding:6px 10px;font-family:inherit;resize:vertical;margin-bottom:8px"></textarea>
+                <div style="display:flex;gap:8px">
+                    <button class="btn-primary btn-sm" onclick="forumSaveBoard()">SAVE</button>
+                    <button class="btn-sm" onclick="forumCancelEdit()" style="background:transparent;border:1px solid #555;color:#888;border-radius:4px;cursor:pointer;padding:3px 10px;font-size:11px">CANCEL</button>
+                </div>
+            </div>
+            <div id="forum-boards-list"><div style="color:rgba(212,205,164,0.35);font-size:12px;font-style:italic">Switch to this tab to load boards.</div></div>
+        </div>
+    </div>
+
+    <!-- TAB: NEWS -->
+    <div class="tab-pane" id="tab-news">
+        <div class="card">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+                <button class="btn-primary btn-sm" onclick="newsToggleCreate()">+ NEW POST</button>
+                <button class="btn-primary btn-sm" onclick="loadNews()">&#8635; REFRESH</button>
+                <span id="news-msg" style="font-size:11px;color:#6de86d"></span>
+            </div>
+            <div id="news-create-form" style="display:none;background:rgba(0,0,0,0.3);padding:12px;border-radius:6px;margin-bottom:12px">
+                <input type="hidden" id="nc-id" value="" />
+                <input type="text" id="nc-title" placeholder="Title" style="width:100%;margin-bottom:8px" />
+                <textarea id="nc-content" placeholder="Content (supports line breaks)" style="width:100%;min-height:100px;background:rgba(0,0,0,0.5);border:1px solid rgba(154,101,21,0.6);border-radius:4px;color:#d4cda4;font-size:13px;padding:6px 10px;font-family:inherit;resize:vertical;margin-bottom:8px"></textarea>
+                <div style="display:flex;gap:8px">
+                    <button class="btn-primary btn-sm" onclick="newsSave()">SAVE</button>
+                    <button class="btn-sm" onclick="newsCancelEdit()" style="background:transparent;border:1px solid #555;color:#888;border-radius:4px;cursor:pointer;padding:3px 10px;font-size:11px">CANCEL</button>
+                </div>
+            </div>
+            <div id="news-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- RENAME MODAL -->
+<div class="modal-bg" id="rename-modal">
+    <div class="modal">
+        <h3>RENAME USER</h3>
+        <input type="text" id="rename-input" maxlength="16" placeholder="New username"/>
+        <div class="error" id="rename-error"></div>
+        <div class="modal-btns">
+            <button class="btn-primary" onclick="doRename()">SAVE</button>
+            <button class="btn-primary" onclick="closeModal('rename-modal')">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- RESET PW MODAL -->
+<div class="modal-bg" id="pw-modal">
+    <div class="modal">
+        <h3>RESET PASSWORD</h3>
+        <input type="password" id="pw-input" maxlength="64" placeholder="New password (min 3 chars)"/>
+        <div class="error" id="pw-error"></div>
+        <div class="modal-btns">
+            <button class="btn-primary" onclick="doPwReset()">SAVE</button>
+            <button class="btn-primary" onclick="closeModal('pw-modal')">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-bg" id="del-modal">
+    <div class="modal">
+        <h3>DELETE USER</h3>
+        <p style="color:#ffaaaa;font-size:13px;margin-bottom:14px">Delete <strong id="del-name"></strong>? This cannot be undone.</p>
+        <div class="modal-btns">
+            <button class="btn-danger" onclick="doDelete()">DELETE</button>
+            <button class="btn-primary" onclick="closeModal('del-modal')">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- STATS MODAL -->
+<div class="modal-bg" id="stats-modal">
+    <div class="modal">
+        <h3>EDIT STATS — <span id="stats-name"></span></h3>
+        <div class="stat-row"><span class="stat-label">XP (level auto-computed)</span><input type="number" id="s-xp" min="0" placeholder="XP"/></div>
+        <div class="stat-row"><span class="stat-label">Wins</span><input type="number" id="s-wins" min="0" placeholder="wins"/></div>
+        <div class="stat-row"><span class="stat-label">Losses</span><input type="number" id="s-losses" min="0" placeholder="losses"/></div>
+        <div class="stat-row"><span class="stat-label">Deserted</span><input type="number" id="s-deserted" min="0" placeholder="deserted"/></div>
+        <div class="stat-row"><span class="stat-label">Disconnected</span><input type="number" id="s-disconnected" min="0" placeholder="disconnected"/></div>
+        <div class="stat-row"><span class="stat-label">Play time (seconds)</span><input type="number" id="s-time" min="0" placeholder="seconds"/></div>
+        <div class="stat-row"><span class="stat-label">Longest match (seconds)</span><input type="number" id="s-longest" min="0" placeholder="seconds"/></div>
+        <div class="error" id="stats-error"></div>
+        <div class="success" id="stats-success"></div>
+        <div class="modal-btns">
+            <button class="btn-primary" onclick="doSaveStats()">SAVE</button>
+            <button class="btn-primary" onclick="closeModal('stats-modal')">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- AVATAR MODAL -->
+<div class="modal-bg" id="avatar-modal">
+    <div class="modal">
+        <h3>AVATAR — <span id="avatar-name"></span></h3>
+        <img id="avatar-preview" class="modal-avatar" src="" onerror="this.src='/img/default.png'" />
+        <div style="display:flex;gap:8px;margin-bottom:10px;justify-content:center">
+            <label style="cursor:pointer">
+                <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="doUploadAvatar()"/>
+                <span class="btn-primary" style="display:inline-block;padding:5px 14px;border-radius:4px;border:1px solid rgba(154,101,21,0.7)">UPLOAD</span>
+            </label>
+            <button class="btn-danger" onclick="doDeleteAvatar()">DELETE AVATAR</button>
+        </div>
+        <div class="error" id="avatar-error"></div>
+        <div class="success" id="avatar-success"></div>
+        <div class="modal-btns">
+            <button class="btn-primary" onclick="closeModal('avatar-modal')">CLOSE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var adminToken = '';
+var captchaToken = '';
+var targetUserId = null;
+
+function authHeaders(extra) {
+    return Object.assign({ 'x-admin-token': adminToken }, extra || {});
+}
+
+/* ── CAPTCHA ── */
+function loadCaptcha() {
+    fetch('/api/admin/captcha')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            document.getElementById('captcha-svg').innerHTML = d.svg;
+            captchaToken = d.token;
+            document.getElementById('captcha-input').value = '';
+        });
+}
+
+/* ── LOGIN ── */
+function doLogin() {
+    var pass = document.getElementById('admin-pass').value;
+    var answer = document.getElementById('captcha-input').value.trim();
+    document.getElementById('login-error').textContent = '';
+    fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pass, captchaToken: captchaToken, captchaAnswer: answer })
+    })
+    .then(function(r){
+        if (!r.ok) return r.json().then(function(d){ throw new Error(d.error || 'Login failed'); });
+        return r.json();
+    })
+    .then(function(d){
+        adminToken = d.adminToken;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-screen').style.display = '';
+        loadUsers();
+        loadSettings();
+        loadStore();
+        loadGoldSettings();
+        loadNews();
+    })
+    .catch(function(e){
+        document.getElementById('login-error').textContent = e.message || 'Error';
+        loadCaptcha();
+    });
+}
+
+function loadUsers() {
+    fetch('/api/admin/users', { headers: authHeaders() })
+        .then(function(r) { return r.json(); })
+        .then(renderUsers);
+}
+
+function renderUsers(users) {
+    document.getElementById('user-count').textContent = users.length;
+    var tbody = document.getElementById('user-tbody');
+    tbody.innerHTML = '';
+    users.forEach(function(u) {
+        var date = new Date(u.created_at).toLocaleDateString();
+        var tr = document.createElement('tr');
+        var statsShort = 'W:' + (u.matches_won||0) + ' L:' + (u.matches_lost||0);
+        tr.innerHTML =
+            '<td>' + u.id + '</td>' +
+            '<td><img class="av-img" src="/api/profile/avatar/' + u.id + '?v=' + Date.now() + '" onerror="this.src=\'/img/default.png\'"/></td>' +
+            '<td><strong>' + esc(u.username) + '</strong></td>' +
+            '<td style="color:rgba(212,205,164,0.5);font-size:11px">' + esc(u.email || '—') + '</td>' +
+            '<td><span class="lv-badge">Lv ' + (u.level||1) + '</span> <span class="xp-text">' + (u.xp||0) + ' XP</span></td>' +
+            '<td style="color:rgba(212,205,164,0.45);font-size:11px">' + statsShort + '</td>' +
+            '<td>' + roleSelect(u.id, u.is_admin||0) + '</td>' +
+            '<td style="color:rgba(212,205,164,0.4);font-size:11px">' + date + '</td>' +
+            '<td><div class="td-actions">' +
+            '<button class="btn-primary btn-sm" onclick="openRename(' + u.id + ')">RENAME</button>' +
+            '<button class="btn-primary btn-sm" onclick="openPwReset(' + u.id + ')">RESET PW</button>' +
+            '<button class="btn-primary btn-sm" onclick=\'openStats(' + JSON.stringify(u) + ')\'>STATS</button>' +
+            '<button class="btn-primary btn-sm" onclick="openAvatar(' + u.id + ',\'' + esc(u.username) + '\')">AVATAR</button>' +
+            '<button class="btn-danger btn-sm" onclick="openDelete(' + u.id + ',\'' + esc(u.username) + '\')">DELETE</button>' +
+            '</div></td>';
+        tbody.appendChild(tr);
+    });
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── SETTINGS ── */
+function loadSettings() {
+    fetch('/api/admin/settings', { headers: authHeaders() })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ document.getElementById('s-expiry-days').value = d.sessionExpiryDays || 30; });
+}
+function saveSettings() {
+    var days = parseInt(document.getElementById('s-expiry-days').value);
+    var msg = document.getElementById('settings-msg');
+    msg.textContent = '';
+    fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ sessionExpiryDays: days })
+    }).then(function(r){ return r.json(); }).then(function(d){
+        msg.style.color = d.error ? '#ff6666' : '#6de86d';
+        msg.textContent = d.error || 'Saved!';
+    });
+}
+
+/* ── RENAME ── */
+function openRename(id) {
+    targetUserId = id;
+    document.getElementById('rename-input').value = '';
+    document.getElementById('rename-error').textContent = '';
+    document.getElementById('rename-modal').classList.add('open');
+    setTimeout(function(){ document.getElementById('rename-input').focus(); }, 50);
+}
+function doRename() {
+    var name = document.getElementById('rename-input').value.trim();
+    fetch('/api/admin/users/' + targetUserId + '/username', {
+        method: 'PUT',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ username: name })
+    }).then(function(r){ return r.json(); }).then(function(d){
+        if(d.error){ document.getElementById('rename-error').textContent = d.error; }
+        else { closeModal('rename-modal'); loadUsers(); }
+    });
+}
+
+/* ── RESET PW ── */
+function openPwReset(id) {
+    targetUserId = id;
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-error').textContent = '';
+    document.getElementById('pw-modal').classList.add('open');
+    setTimeout(function(){ document.getElementById('pw-input').focus(); }, 50);
+}
+function doPwReset() {
+    var pw = document.getElementById('pw-input').value;
+    fetch('/api/admin/users/' + targetUserId + '/password', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ password: pw })
+    }).then(function(r){ return r.json(); }).then(function(d){
+        if(d.error){ document.getElementById('pw-error').textContent = d.error; }
+        else { closeModal('pw-modal'); }
+    });
+}
+
+/* ── DELETE ── */
+function openDelete(id, name) {
+    targetUserId = id;
+    document.getElementById('del-name').textContent = name;
+    document.getElementById('del-modal').classList.add('open');
+}
+function doDelete() {
+    fetch('/api/admin/users/' + targetUserId, {
+        method: 'DELETE',
+        headers: authHeaders()
+    }).then(function(r){ return r.json(); }).then(function(){
+        closeModal('del-modal'); loadUsers();
+    });
+}
+
+/* ── STATS ── */
+function openStats(u) {
+    targetUserId = u.id;
+    document.getElementById('stats-name').textContent = u.username;
+    document.getElementById('s-xp').value = u.xp || 0;
+    document.getElementById('s-wins').value = u.matches_won || 0;
+    document.getElementById('s-losses').value = u.matches_lost || 0;
+    document.getElementById('s-deserted').value = u.matches_deserted || 0;
+    document.getElementById('s-disconnected').value = u.matches_disconnected || 0;
+    document.getElementById('s-time').value = u.played_time_seconds || 0;
+    document.getElementById('s-longest').value = u.longest_match_seconds || 0;
+    document.getElementById('stats-error').textContent = '';
+    document.getElementById('stats-success').textContent = '';
+    document.getElementById('stats-modal').classList.add('open');
+}
+function doSaveStats() {
+    document.getElementById('stats-error').textContent = '';
+    document.getElementById('stats-success').textContent = '';
+    var body = {
+        xp:                   document.getElementById('s-xp').value,
+        matches_won:          document.getElementById('s-wins').value,
+        matches_lost:         document.getElementById('s-losses').value,
+        matches_deserted:     document.getElementById('s-deserted').value,
+        matches_disconnected: document.getElementById('s-disconnected').value,
+        played_time_seconds:  document.getElementById('s-time').value,
+        longest_match_seconds:document.getElementById('s-longest').value
+    };
+    fetch('/api/admin/users/' + targetUserId + '/stats', {
+        method: 'PUT',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(body)
+    }).then(function(r){ return r.json(); }).then(function(d){
+        if(d.error){ document.getElementById('stats-error').textContent = d.error; }
+        else {
+            document.getElementById('stats-success').textContent = 'Saved!';
+            setTimeout(function(){ closeModal('stats-modal'); loadUsers(); }, 800);
+        }
+    });
+}
+
+/* ── AVATAR ── */
+function openAvatar(id, name) {
+    targetUserId = id;
+    document.getElementById('avatar-name').textContent = name;
+    document.getElementById('avatar-preview').src = '/api/profile/avatar/' + id + '?v=' + Date.now();
+    document.getElementById('avatar-error').textContent = '';
+    document.getElementById('avatar-success').textContent = '';
+    document.getElementById('avatar-file-input').value = '';
+    document.getElementById('avatar-modal').classList.add('open');
+}
+function doUploadAvatar() {
+    var file = document.getElementById('avatar-file-input').files[0];
+    if(!file) return;
+    document.getElementById('avatar-error').textContent = '';
+    document.getElementById('avatar-success').textContent = '';
+    var fd = new FormData();
+    fd.append('avatar', file);
+    fetch('/api/admin/users/' + targetUserId + '/avatar', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: fd
+    }).then(function(r){ return r.json(); }).then(function(d){
+        if(d.error){ document.getElementById('avatar-error').textContent = d.error; }
+        else {
+            document.getElementById('avatar-success').textContent = 'Avatar updated!';
+            document.getElementById('avatar-preview').src = '/api/profile/avatar/' + targetUserId + '?v=' + Date.now();
+            loadUsers();
+        }
+    });
+}
+function doDeleteAvatar() {
+    document.getElementById('avatar-error').textContent = '';
+    document.getElementById('avatar-success').textContent = '';
+    fetch('/api/admin/users/' + targetUserId + '/avatar', {
+        method: 'DELETE',
+        headers: authHeaders()
+    }).then(function(r){ return r.json(); }).then(function(){
+        document.getElementById('avatar-success').textContent = 'Avatar deleted.';
+        document.getElementById('avatar-preview').src = '/img/default.png';
+        loadUsers();
+    });
+}
+
+/* ── CHALLENGES ── */
+function rerollChallenges(type) {
+    var msg = document.getElementById('reroll-msg');
+    msg.style.color = 'rgba(212,205,164,0.5)';
+    msg.textContent = 'Rerolling...';
+    fetch('/api/admin/challenges/reroll/' + type, {
+        method: 'POST',
+        headers: authHeaders()
+    }).then(function(r){ return r.json(); }).then(function(d){
+        if (d.error) {
+            msg.style.color = '#ff6666';
+            msg.textContent = d.error;
+        } else {
+            msg.style.color = '#6de86d';
+            msg.textContent = (type === 'daily' ? 'Daily' : 'Weekly') + ' rerolled — ' + d.count + ' new challenges, key: ' + d.dateKey;
+        }
+    }).catch(function(e){
+        msg.style.color = '#ff6666';
+        msg.textContent = 'Error: ' + (e.message || 'unknown');
+    });
+}
+
+/* ── SHARED ── */
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    targetUserId = null;
+}
+
+document.querySelectorAll('.modal-bg').forEach(function(m){
+    m.addEventListener('click', function(e){ if(e.target === m) m.classList.remove('open'); });
+});
+
+setInterval(function(){ if(adminToken && document.getElementById('admin-screen').style.display !== 'none') loadUsers(); }, 30000);
+
+/* ── TAB SWITCHING ── */
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.admin-tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('tab-'+name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'forum') loadForumBoards();
+}
+
+/* ── STORE ── */
+var _storeAllItems = [];
+var _storePage = 0;
+var _storePageSize = 50;
+
+function storeEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function storeTypeColor(t) {
+    return {reticle:'#66aaff',background:'#66ff99',title:'#f0c040',name_effect:'#ff88ff',emoji:'#ffaa66'}[t]||'#888';
+}
+function loadStore() {
+    fetch('/api/admin/store/items', { headers: authHeaders() })
+        .then(function(r){ return r.json(); })
+        .then(function(items){
+            _storeAllItems = Array.isArray(items) ? items : [];
+            _storePage = 0;
+            renderStoreTable();
+        });
+}
+function storeSearchChanged() {
+    _storePage = 0;
+    renderStoreTable();
+}
+function renderStoreTable() {
+    var q = (document.getElementById('store-search') ? document.getElementById('store-search').value : '').toLowerCase().trim();
+    var filtered = _storeAllItems.filter(function(item){
+        if (!q) return true;
+        return (item.name||'').toLowerCase().includes(q)
+            || String(item.price).includes(q)
+            || (item.type||'').toLowerCase().includes(q)
+            || (item.description||'').toLowerCase().includes(q)
+            || String(item.id).includes(q);
+    });
+    var total = filtered.length;
+    var pages = Math.ceil(total / _storePageSize) || 1;
+    if (_storePage >= pages) _storePage = pages - 1;
+    var pageItems = filtered.slice(_storePage * _storePageSize, (_storePage + 1) * _storePageSize);
+
+    var countEl = document.getElementById('store-count');
+    if (countEl) countEl.textContent = total + ' items' + (q ? ' (filtered)' : '');
+
+    var tbody = document.getElementById('store-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = pageItems.map(function(item){
+        var preview = '';
+        if (item.file_path && item.type === 'reticle') preview = '<img src="/store/asset/'+storeEsc(item.file_path)+'" style="width:36px;height:36px;object-fit:contain;background:#111;border-radius:3px" onerror="this.style.display=\'none\'" />';
+        else if (item.file_path && item.type === 'background') preview = '<video src="/store/asset/'+storeEsc(item.file_path)+'" autoplay loop muted playsinline style="width:50px;height:32px;object-fit:cover;border-radius:3px"></video>';
+        else if (item.type === 'title') preview = '<span style="font-weight:bold;font-size:11px;color:'+storeEsc(storeMetaColor(item.meta))+'">'+storeEsc(item.name)+'</span>';
+        else preview = '<span style="font-size:10px;color:#888">'+storeEsc(item.type)+'</span>';
+        return '<tr>'
+            +'<td>'+item.id+'</td>'
+            +'<td><span style="color:'+storeTypeColor(item.type)+'">'+storeEsc(item.type)+'</span></td>'
+            +'<td>'+preview+'</td>'
+            +'<td><input type="text" value="'+storeEsc(item.name)+'" onchange="storeField('+item.id+',\'name\',this.value)" style="width:90px;background:rgba(0,0,0,0.4);border:1px solid #3a2805;color:#d4cda4;padding:2px 4px;border-radius:3px;font-size:11px" /></td>'
+            +'<td><input type="number" value="'+item.price+'" onchange="storeField('+item.id+',\'price\',parseInt(this.value))" style="width:54px;background:rgba(0,0,0,0.4);border:1px solid #3a2805;color:#f0c040;padding:2px 4px;border-radius:3px;font-size:11px" /></td>'
+            +'<td><input type="text" value="'+storeEsc(item.description||'')+'" onchange="storeField('+item.id+',\'description\',this.value)" style="width:100px;background:rgba(0,0,0,0.4);border:1px solid #3a2805;color:#d4cda4;padding:2px 4px;border-radius:3px;font-size:11px" /></td>'
+            +'<td><input type="text" value="'+storeEsc(item.meta||'{}')+'" onchange="storeField('+item.id+',\'meta\',this.value)" title="Title: {&quot;color&quot;:&quot;#f0c040&quot;} | Name effect: {&quot;cssClass&quot;:&quot;name-fire&quot;}" style="width:120px;background:rgba(0,0,0,0.4);border:1px solid #3a2805;color:#888;padding:2px 4px;border-radius:3px;font-size:10px;font-family:monospace" /></td>'
+            +'<td><input type="checkbox" '+(item.active?'checked':'')+' onchange="storeField('+item.id+',\'active\',this.checked?1:0)" /></td>'
+            +'<td><input type="number" value="'+(item.sort_order||0)+'" onchange="storeField('+item.id+',\'sort_order\',parseInt(this.value))" style="width:40px;background:rgba(0,0,0,0.4);border:1px solid #3a2805;color:#d4cda4;padding:2px 4px;border-radius:3px;font-size:11px" /></td>'
+            +'<td><button class="btn-danger btn-sm" onclick="storeDelete('+item.id+')">DEL</button></td>'
+            +'</tr>';
+    }).join('');
+
+    var pag = document.getElementById('store-pagination');
+    if (!pag) return;
+    if (pages <= 1) { pag.innerHTML = ''; return; }
+    var btns = '';
+    btns += '<button class="btn-sm" style="background:transparent;border:1px solid #555;color:#888;border-radius:3px;cursor:pointer;padding:2px 8px;font-size:11px" onclick="storePaginate(-1)" '+(pages<=1||_storePage===0?'disabled':'')+'>&#8249;</button>';
+    btns += '<span style="font-size:11px;color:#888;padding:0 8px">'+(_storePage+1)+' / '+pages+'</span>';
+    btns += '<button class="btn-sm" style="background:transparent;border:1px solid #555;color:#888;border-radius:3px;cursor:pointer;padding:2px 8px;font-size:11px" onclick="storePaginate(1)" '+(_storePage>=pages-1?'disabled':'')+'>&#8250;</button>';
+    pag.innerHTML = btns;
+}
+function storePaginate(dir) {
+    var q = (document.getElementById('store-search') ? document.getElementById('store-search').value : '').toLowerCase().trim();
+    var filtered = _storeAllItems.filter(function(item){
+        if (!q) return true;
+        return (item.name||'').toLowerCase().includes(q)||String(item.price).includes(q)||(item.type||'').toLowerCase().includes(q)||(item.description||'').toLowerCase().includes(q)||String(item.id).includes(q);
+    });
+    var pages = Math.ceil(filtered.length / _storePageSize) || 1;
+    _storePage = Math.max(0, Math.min(pages - 1, _storePage + dir));
+    renderStoreTable();
+}
+function storeMetaColor(meta) {
+    try { return JSON.parse(meta||'{}').color || '#f0c040'; } catch(e) { return '#f0c040'; }
+}
+function storeField(id, field, value) {
+    var body = {};
+    body[field] = value;
+    fetch('/api/admin/store/items/'+id, {
+        method: 'PUT',
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify(body)
+    }).then(function(r){ return r.json(); }).then(function(){
+        var msg = document.getElementById('store-msg');
+        msg.textContent = 'Saved';
+        setTimeout(function(){ msg.textContent=''; }, 1500);
+    });
+}
+function storeDelete(id) {
+    if (!confirm('Permanently delete item #'+id+'?\nThis removes it from all user inventories and unequips it for everyone.')) return;
+    fetch('/api/admin/store/items/'+id, { method:'DELETE', headers:authHeaders() })
+        .then(function(){ loadStore(); });
+}
+function storeSyncFiles() {
+    fetch('/api/admin/store/sync', { method:'POST', headers:authHeaders() })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ alert('Synced: '+d.created+' created, '+d.skipped+' skipped'); loadStore(); });
+}
+function storeToggleCreate() {
+    var f = document.getElementById('store-create-form');
+    f.style.display = f.style.display === 'none' ? '' : 'none';
+}
+function storeCreateItem() {
+    var body = {
+        type: document.getElementById('sc-type').value,
+        name: document.getElementById('sc-name').value.trim(),
+        price: parseInt(document.getElementById('sc-price').value)||100,
+        file_path: document.getElementById('sc-filepath').value.trim()||null,
+        description: document.getElementById('sc-desc').value.trim(),
+        meta: document.getElementById('sc-meta').value.trim()||'{}'
+    };
+    if (!body.name) { alert('Name required'); return; }
+    fetch('/api/admin/store/items', {
+        method:'POST',
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify(body)
+    }).then(function(r){ return r.json(); }).then(function(){
+        document.getElementById('store-create-form').style.display='none';
+        loadStore();
+    });
+}
+
+/* ── GOLD CONFIG ── */
+function loadGoldSettings() {
+    fetch('/api/admin/gold/settings', { headers: authHeaders() }).then(function(r){ return r.json(); }).then(function(rows) {
+        var wrap = document.getElementById('gold-settings-wrap');
+        if (!wrap) return;
+        wrap.innerHTML = rows.map(function(row) {
+            return '<div style="background:rgba(0,0,0,0.3);border:1px solid #3a2805;border-radius:6px;padding:8px 12px;min-width:160px">'
+                + '<div style="font-size:9px;color:#888;letter-spacing:1px;margin-bottom:4px">'+row.label.toUpperCase()+'</div>'
+                + '<div style="display:flex;align-items:center;gap:6px">'
+                + '<input type="number" value="'+row.value+'" min="0" style="width:70px;background:rgba(0,0,0,0.5);border:1px solid #9a6515;color:#f0c040;padding:3px 6px;border-radius:3px;font-size:13px;font-weight:bold" onchange="goldSaveSetting(\''+row.key+'\',this.value)" />'
+                + '<span style="color:#888;font-size:11px">G</span>'
+                + '</div></div>';
+        }).join('');
+    });
+    fetch('/api/admin/gold/events', { headers: authHeaders() }).then(function(r){ return r.json(); }).then(function(events) {
+        var tbody = document.getElementById('gold-events-tbody');
+        if (!tbody) return;
+        var now = Date.now() / 1000;
+        tbody.innerHTML = events.map(function(ev) {
+            var status = !ev.active ? '<span style="color:#555">Disabled</span>'
+                : ev.end_at < now ? '<span style="color:#888">Expired</span>'
+                : ev.start_at > now ? '<span style="color:#aaa">Scheduled</span>'
+                : '<span style="color:#6de86d;font-weight:bold">ACTIVE</span>';
+            return '<tr>'
+                +'<td>'+ev.id+'</td>'
+                +'<td>'+storeEsc(ev.name)+(ev.description?'<br><span style="color:#666;font-size:10px">'+storeEsc(ev.description)+'</span>':'')+'</td>'
+                +'<td style="color:#f0c040;font-weight:bold">&times;'+ev.multiplier+'</td>'
+                +'<td style="font-size:11px">'+new Date(ev.start_at*1000).toLocaleString()+'</td>'
+                +'<td style="font-size:11px">'+new Date(ev.end_at*1000).toLocaleString()+'</td>'
+                +'<td>'+status+'</td>'
+                +'<td><input type="checkbox" '+(ev.active?'checked':'')+' onchange="goldEventToggle('+ev.id+',this.checked)" /></td>'
+                +'<td><button class="btn-danger btn-sm" onclick="goldDeleteEvent('+ev.id+')">DEL</button></td>'
+                +'</tr>';
+        }).join('');
+    });
+}
+function goldSaveSetting(key, value) {
+    var v = parseInt(value);
+    if (isNaN(v) || v < 0) return;
+    fetch('/api/admin/gold/settings/'+key, {
+        method: 'PUT',
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ value: v })
+    }).then(function() {
+        var msg = document.getElementById('gold-msg');
+        msg.textContent = 'Saved';
+        setTimeout(function(){ msg.textContent=''; }, 1500);
+    });
+}
+function goldToggleCreate() {
+    var f = document.getElementById('gold-event-create');
+    f.style.display = f.style.display === 'none' ? '' : 'none';
+}
+function goldCreateEvent() {
+    var name = document.getElementById('ge-name').value.trim();
+    var mult = parseFloat(document.getElementById('ge-mult').value) || 2.0;
+    var desc = document.getElementById('ge-desc').value.trim();
+    var start = document.getElementById('ge-start').value;
+    var end = document.getElementById('ge-end').value;
+    if (!name || !start || !end) { alert('Name, start and end required'); return; }
+    var startTs = Math.floor(new Date(start).getTime() / 1000);
+    var endTs = Math.floor(new Date(end).getTime() / 1000);
+    if (endTs <= startTs) { alert('End must be after start'); return; }
+    fetch('/api/admin/gold/events', {
+        method: 'POST',
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ name: name, description: desc, multiplier: mult, start_at: startTs, end_at: endTs })
+    }).then(function(r){ return r.json(); }).then(function() {
+        document.getElementById('gold-event-create').style.display = 'none';
+        loadGoldSettings();
+    });
+}
+function goldEventToggle(id, active) {
+    fetch('/api/admin/gold/events/'+id, {
+        method: 'PUT',
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ active: active ? 1 : 0 })
+    }).then(function(){ loadGoldSettings(); });
+}
+function goldDeleteEvent(id) {
+    if (!confirm('Delete event #'+id+'?')) return;
+    fetch('/api/admin/gold/events/'+id, { method:'DELETE', headers:authHeaders() })
+        .then(function(){ loadGoldSettings(); });
+}
+
+/* ── NEWS ── */
+function loadNews() {
+    fetch('/api/admin/news', { headers: authHeaders() }).then(function(r){ return r.json(); }).then(function(posts) {
+        var el = document.getElementById('news-list');
+        if (!el) return;
+        if (!posts.length) { el.innerHTML = '<div style="color:#666;font-size:11px;font-style:italic;padding:8px 0">No posts yet.</div>'; return; }
+        el.innerHTML = posts.map(function(p) {
+            var date = new Date(p.created_at*1000).toLocaleString();
+            return '<div style="border:1px solid #3a2805;border-radius:6px;padding:10px 14px;margin-bottom:8px">'
+                + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">'
+                + '<span style="font-weight:bold;color:#d4cda4;font-size:13px">'+storeEsc(p.title)+'</span>'
+                + '<span style="font-size:10px;color:#666">'+date+'</span>'
+                + (p.published ? '<span style="font-size:9px;color:#6de86d;border:1px solid #6de86d;border-radius:3px;padding:1px 5px">PUBLISHED</span>'
+                    : '<span style="font-size:9px;color:#888;border:1px solid #555;border-radius:3px;padding:1px 5px">DRAFT</span>')
+                + '</div>'
+                + '<div style="color:#888;font-size:11px;white-space:pre-wrap;margin-bottom:8px;max-height:80px;overflow:hidden">'+storeEsc(p.content)+'</div>'
+                + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+                + '<button class="btn-primary btn-sm" onclick="newsEdit('+p.id+')">EDIT</button>'
+                + (p.published
+                    ? '<button class="btn-sm" onclick="newsTogglePublish('+p.id+',0)" style="background:transparent;border:1px solid #555;color:#888;border-radius:4px;cursor:pointer;padding:3px 10px;font-size:11px">UNPUBLISH</button>'
+                    : '<button class="btn-primary btn-sm" onclick="newsTogglePublish('+p.id+',1)">PUBLISH</button>')
+                + '<button class="btn-danger btn-sm" onclick="newsDeletePost('+p.id+')">DEL</button>'
+                + '</div></div>';
+        }).join('');
+        window._newsPosts = posts;
+    });
+}
+function newsToggleCreate() {
+    document.getElementById('nc-id').value = '';
+    document.getElementById('nc-title').value = '';
+    document.getElementById('nc-content').value = '';
+    var f = document.getElementById('news-create-form');
+    f.style.display = f.style.display === 'none' ? '' : 'none';
+}
+function newsEdit(id) {
+    var p = (window._newsPosts||[]).find(function(x){ return x.id===id; });
+    if (!p) return;
+    document.getElementById('nc-id').value = id;
+    document.getElementById('nc-title').value = p.title;
+    document.getElementById('nc-content').value = p.content;
+    document.getElementById('news-create-form').style.display = '';
+    document.getElementById('news-create-form').scrollIntoView({ behavior:'smooth' });
+}
+function newsCancelEdit() {
+    document.getElementById('news-create-form').style.display = 'none';
+    document.getElementById('nc-id').value = '';
+}
+function newsSave() {
+    var id = document.getElementById('nc-id').value;
+    var title = document.getElementById('nc-title').value.trim();
+    var content = document.getElementById('nc-content').value.trim();
+    if (!title) { alert('Title required'); return; }
+    var url = id ? '/api/admin/news/'+id : '/api/admin/news';
+    var method = id ? 'PUT' : 'POST';
+    fetch(url, {
+        method: method,
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ title: title, content: content })
+    }).then(function(){ newsCancelEdit(); loadNews(); });
+}
+function newsTogglePublish(id, val) {
+    fetch('/api/admin/news/'+id, {
+        method: 'PUT',
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ published: val })
+    }).then(function(){ loadNews(); });
+}
+function newsDeletePost(id) {
+    if (!confirm('Delete post #'+id+'?')) return;
+    fetch('/api/admin/news/'+id, { method:'DELETE', headers:authHeaders() }).then(function(){ loadNews(); });
+}
+
+/* ── USER ROLE ── */
+function roleSelect(userId, currentRole) {
+    var opts = ['User','Moderator','Admin'].map(function(label, i) {
+        return '<option value="'+i+'"'+(i===currentRole?' selected':'')+'>'+label+'</option>';
+    }).join('');
+    return '<select onchange="setUserRole('+userId+',parseInt(this.value))" style="background:rgba(0,0,0,0.5);border:1px solid #3a2805;color:#d4cda4;padding:2px 6px;border-radius:3px;font-size:11px">'+opts+'</select>';
+}
+function setUserRole(userId, role) {
+    fetch('/api/admin/users/'+userId+'/role', {
+        method: 'PUT',
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ role: role })
+    }).then(function(r){ return r.json(); }).then(function(d){
+        var msg = document.getElementById('forum-msg');
+        if (d.error && msg) { msg.style.color='#ff6666'; msg.textContent=d.error; }
+    });
+}
+
+/* ── FORUM BOARDS ── */
+var _forumBoards = [];
+
+function loadForumBoards() {
+    fetch('/api/admin/forum/boards', { headers: authHeaders() })
+        .then(function(r){ return r.json(); })
+        .then(function(boards){
+            _forumBoards = Array.isArray(boards) ? boards : [];
+            renderForumBoards();
+        });
+}
+
+function renderForumBoards() {
+    var el = document.getElementById('forum-boards-list');
+    if (!el) return;
+    if (!_forumBoards.length) {
+        el.innerHTML = '<div style="color:rgba(212,205,164,0.35);font-size:12px;font-style:italic;padding:8px 0">No boards yet.</div>';
+        return;
+    }
+    el.innerHTML = '<div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Sort</th><th>Name</th><th>Description</th><th>Threads</th><th>Posts</th><th>Actions</th></tr></thead><tbody>'
+        + _forumBoards.map(function(b) {
+            return '<tr>'
+                +'<td>'+b.id+'</td>'
+                +'<td><input type="number" value="'+(b.sort_order||0)+'" onchange="forumBoardField('+b.id+',\'sort_order\',parseInt(this.value))" style="width:48px;background:rgba(0,0,0,0.4);border:1px solid #3a2805;color:#d4cda4;padding:2px 4px;border-radius:3px;font-size:11px" /></td>'
+                +'<td><input type="text" value="'+storeEsc(b.name)+'" onchange="forumBoardField('+b.id+',\'name\',this.value)" style="width:130px;background:rgba(0,0,0,0.4);border:1px solid #3a2805;color:#d4cda4;padding:2px 4px;border-radius:3px;font-size:11px" /></td>'
+                +'<td><input type="text" value="'+storeEsc(b.description||'')+'" onchange="forumBoardField('+b.id+',\'description\',this.value)" style="width:180px;background:rgba(0,0,0,0.4);border:1px solid #3a2805;color:#d4cda4;padding:2px 4px;border-radius:3px;font-size:11px" /></td>'
+                +'<td style="color:rgba(212,205,164,0.5);font-size:11px">'+b.thread_count+'</td>'
+                +'<td style="color:rgba(212,205,164,0.5);font-size:11px">'+b.post_count+'</td>'
+                +'<td><button class="btn-danger btn-sm" onclick="forumDeleteBoard('+b.id+')">DEL</button></td>'
+                +'</tr>';
+        }).join('')
+        + '</tbody></table></div>';
+}
+
+function forumToggleCreate() {
+    var f = document.getElementById('forum-create-form');
+    f.style.display = f.style.display === 'none' ? '' : 'none';
+    if (f.style.display !== 'none') {
+        document.getElementById('fb-id').value = '';
+        document.getElementById('fb-name').value = '';
+        document.getElementById('fb-desc').value = '';
+        document.getElementById('fb-sort').value = '0';
+    }
+}
+
+function forumCancelEdit() {
+    document.getElementById('forum-create-form').style.display = 'none';
+}
+
+function forumSaveBoard() {
+    var id = document.getElementById('fb-id').value;
+    var name = document.getElementById('fb-name').value.trim();
+    var desc = document.getElementById('fb-desc').value.trim();
+    var sort = parseInt(document.getElementById('fb-sort').value) || 0;
+    if (!name) { alert('Board name required'); return; }
+    var url = id ? '/api/admin/forum/boards/'+id : '/api/admin/forum/boards';
+    var method = id ? 'PUT' : 'POST';
+    fetch(url, {
+        method: method,
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ name: name, description: desc, sort_order: sort })
+    }).then(function(r){ return r.json(); }).then(function(){
+        forumCancelEdit();
+        loadForumBoards();
+        var msg = document.getElementById('forum-msg');
+        msg.style.color = '#6de86d';
+        msg.textContent = id ? 'Board updated!' : 'Board created!';
+        setTimeout(function(){ msg.textContent=''; }, 2000);
+    });
+}
+
+function forumBoardField(id, field, value) {
+    var body = {};
+    body[field] = value;
+    // need all 3 fields for PUT, get from cache
+    var board = _forumBoards.find(function(b){ return b.id===id; });
+    if (!board) return;
+    board[field] = value;
+    fetch('/api/admin/forum/boards/'+id, {
+        method: 'PUT',
+        headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ name: board.name, description: board.description||'', sort_order: board.sort_order||0 })
+    }).then(function(r){ return r.json(); }).then(function(){
+        var msg = document.getElementById('forum-msg');
+        msg.style.color = '#6de86d';
+        msg.textContent = 'Saved';
+        setTimeout(function(){ msg.textContent=''; }, 1500);
+    });
+}
+
+function forumDeleteBoard(id) {
+    var board = _forumBoards.find(function(b){ return b.id===id; });
+    var name = board ? board.name : '#'+id;
+    if (!confirm('Delete board "'+name+'"?\nAll threads and posts in this board will be permanently deleted.')) return;
+    fetch('/api/admin/forum/boards/'+id, { method:'DELETE', headers:authHeaders() })
+        .then(function(){ loadForumBoards(); });
+}
+
+loadCaptcha();
+</script>
+</body>
+</html>

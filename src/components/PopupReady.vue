@@ -1,11 +1,11 @@
 <template>
     <Popup>
         <template v-slot:topRow>
-            <div class="wait-message">Waiting for game to start</div>  
+            <div class="wait-message">{{ t('waiting_start') }}</div>
         </template>
         <template v-slot:bottomRow v-if="showButton">
             <div class="spacer"></div>
-            <Button faIcon="paper-plane" :clickHandler="buttonHandler">Ready!</Button>
+            <Button faIcon="paper-plane" :clickHandler="buttonHandler">{{ t('ready') }}</Button>
         </template>
     </Popup>
 </template>
@@ -14,11 +14,15 @@
 
     import Popup from "./Popup"
     import Button from "./Button"
+    import { lang } from '../lang/index.js';
 
     export default {
         name: "PopupReady",
         props:['buttonHandler', 'showButton'],
-        components: {Popup, Button}
+        components: {Popup, Button},
+        methods: {
+            t: function(key, vars) { return lang.t(key, vars); }
+        }
     }
 </script>
 
