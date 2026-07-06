@@ -41,13 +41,20 @@ Achievements are grouped into four categories:
 Each achievement awards **AP (Achievement Points)** and XP. A toast notification with animation fires on unlock mid-game.
 
 ### Daily & Weekly Challenges
-- generated daily challenges and weekly challenges fresh each period
+- Generated daily challenges and weekly challenges fresh each period
 - Challenge types include: play N action cards, win N rounds, call UNO N times, play for N minutes, etc.
 - Progress tracked in real time during matches; XP and AP rewarded on completion
 
 ### Leaderboards & Player Search
 - Global leaderboard by XP/level, wins, losses, cards played, total play time, longest match, wild cards
 - Search any player by username; click to open their public profile modal showing level, stats, and unlocked achievements
+
+### Social part
+- Global Chat
+- Ingamne Chat
+- PM chat per player
+- Friend system
+- Invitation System
 
 ### Ingame Store
 - Gold money added - only achievable thru playing games and completing achievements and challanges.
