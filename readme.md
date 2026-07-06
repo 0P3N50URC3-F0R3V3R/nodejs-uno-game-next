@@ -229,6 +229,9 @@ data/
 
 ---
 
+## BUGS
+Oh there are... a LOOOOOOOOOOOT XD
+
 ## License
 
 This project is derived from [houseofbits/nodejs-uno-game](https://github.com/houseofbits/nodejs-uno-game).  
