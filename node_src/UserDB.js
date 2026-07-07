@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const DATA_DIR = process.env.UNO_DATA_DIR || path.join(__dirname, '..', 'data');
 const DB_PATH = path.join(DATA_DIR, 'users.db');
 
 const XP_BASE = 100;
@@ -232,6 +232,22 @@ class UserDB {
                 PRIMARY KEY(user_id, slot)
             );
         `);
+        this._seedStoreItems();
+    }
+
+    _seedStoreItems() {
+        const count = this.db.prepare('SELECT COUNT(*) c FROM store_items').get().c;
+        if (count > 0) return;
+        const seedPath = path.join(__dirname, 'store_seed.json');
+        let items;
+        try { items = JSON.parse(fs.readFileSync(seedPath, 'utf8')); } catch (e) { return; }
+        const ins = this.db.prepare(
+            'INSERT INTO store_items (type, file_path, name, description, price, active, sort_order, meta) VALUES (?,?,?,?,?,?,?,?)'
+        );
+        const insertAll = this.db.transaction((rows) => {
+            rows.forEach(r => ins.run(r.type, r.file_path, r.name, r.description, r.price, r.active, r.sort_order, r.meta));
+        });
+        insertAll(items);
     }
 
     register(username, password, email) {
@@ -539,6 +555,7 @@ class UserDB {
 
     deleteUser(userId) {
         this.db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+        this.db.prepare('DELETE FROM friends WHERE requester_id = ? OR addressee_id = ?').run(userId, userId);
         const r = this.db.prepare('DELETE FROM users WHERE id = ?').run(userId);
         return { ok: r.changes > 0 };
     }

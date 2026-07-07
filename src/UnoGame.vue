@@ -47,7 +47,7 @@
         </div>
         <SoundPanel :socket="socket"></SoundPanel>
         <PlayerTooltip :tooltipData="tooltipClient" :x="tooltipX" :y="tooltipY"></PlayerTooltip>
-        <GameMenu v-if="state.client.code" :socket="socket" :ruleset="state.game.ruleset" :quitHandler="quitGame" :isHost="state.client.isHost" :tableIndex="tableIndex" :personalHardcoreMode="personalHardcoreMode" @table-change="setTable" @personal-hardcore-change="setPersonalHardcoreMode" @video-bg-change="videoBg = $event" @open-manual="manualOpen = true"></GameMenu>
+        <GameMenu v-if="state.client.code" :socket="socket" :quitHandler="quitGame" :isHost="state.client.isHost" :tableIndex="tableIndex" :personalHardcoreMode="personalHardcoreMode" @table-change="setTable" @personal-hardcore-change="setPersonalHardcoreMode" @video-bg-change="videoBg = $event" @open-manual="manualOpen = true"></GameMenu>
         <ManualPanel v-if="manualOpen" :closeHandler="closeManual"></ManualPanel>
         <XPScreen :xpData="xpData"></XPScreen>
         <div class="gold-hud" v-if="gold > 0 || goldFloats.length">
@@ -425,22 +425,12 @@
                 }
             },
             'state.game.stackPending': function(newVal, oldVal){
+                // Announce the accumulated draw amount only once, when the stack is
+                // actually taken — not on every escalation step while it's still building.
                 if(!newVal && oldVal && !this.state.game.winner){
-                    // Stack was taken — play draw sound for accumulated count
                     let c = oldVal.count;
                     sound.play(this._stackSound(c));
                     if(c === 6) sound.play('plus4');
-                    return;
-                }
-                if(!newVal) return;
-                let count = newVal.count;
-                let prevCount = oldVal ? oldVal.count : 0;
-                if(count <= prevCount) return;
-                if(prevCount === 0) return; // first card: _detectActionEvent handles sound
-                // Escalation sounds when stack grows beyond first card
-                if(count >= 4){
-                    sound.play(this._stackSound(count));
-                    if(count === 6) sound.play('plus4');
                 }
             },
             'state.game.lastEvent': function(ev){
@@ -451,7 +441,7 @@
                 if(ev.type === 'uf'){
                     let missed = ['unoMissedNo','unoMissedOops','unoMissedSuffer'];
                     sound.play('unoFail');
-                    sound.play(missed[Math.floor(Math.random() * missed.length)], function(){ sound.play('draw8'); });
+                    sound.play(missed[Math.floor(Math.random() * missed.length)]);
                 }
                 if(ev.type === 'u' && ev.target !== this.self){ sound.play('uno'); sound.play('yellUno'); }
                 let evName = ev.target2 ? (ev.target + ' & ' + ev.target2) : (ev.target || '');
@@ -1128,6 +1118,15 @@
                     this._discardAnimLockUntil = Date.now() + DISCARD_ANIM_LOCK_MS;
                 }
                 if(hasDiscard && dealIdx > 0) sound.play('deal');
+
+                // Added: universal card_play.mp3 / card_deal.mp3, beside the sounds above —
+                // fires for every play/deal event regardless of who or what card type.
+                if(hasDiscard) sound.play('play');
+                let anyDeal = false;
+                for(let i = 0; i < events.length; i++){
+                    if(events[i].newOwner !== 'dsc' && events[i].newOwner !== 'draw'){ anyDeal = true; break; }
+                }
+                if(anyDeal) sound.play('deal');
             },
             updateState:function(cards){
                 let dealIdx = 0;
@@ -1545,6 +1544,19 @@
             },
         },
         mounted:function () {
+            // Browsers don't let a page block Ctrl+R/F5 outright (that's a deliberate
+            // security limit, not something JS can override) — beforeunload is the
+            // actual mechanism: it shows the browser's native "leave site?" confirm
+            // prompt for any refresh/close/navigation-away, which is the real,
+            // reliable way to guard against an accidental mid-game refresh.
+            let unoGameSelf = this;
+            window.addEventListener('beforeunload', function(e){
+                if(unoGameSelf.state.client.code){
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+
             let savedTable = parseInt(localStorage.getItem('unoTable'));
             if(savedTable >= 1 && savedTable <= 6) this.tableIndex = savedTable;
             this._animPending = 0;
@@ -1561,11 +1573,6 @@
             this.socket.on('state', this.gameStateResponse);
 
             let self = this;
-            this.socket.on('rulesetChanged', function(data){
-                if(data && (data.ruleset === 'original' || data.ruleset === 'stacking')){
-                    self.state.game.ruleset = data.ruleset;
-                }
-            });
 
             this.socket.on('xpAwarded', function(data){
                 self.xpData = data;

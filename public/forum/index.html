@@ -306,15 +306,25 @@ function initAuth(){
         .then(function(d){ me=d&&d.id?d:null; renderUserBar(); })
         .catch(function(){ me=null; renderUserBar(); });
 }
+function goBackToGame(){
+    // The forum is always opened via window.open() from the game (see openForum()
+    // in Authorize.vue), so the original game tab is already sitting open elsewhere —
+    // navigating this tab to "/" instead of closing it boots a second live game
+    // session under the same login, which bumps/disconnects the original tab.
+    // window.close() only works on script-opened windows and is a silent no-op
+    // otherwise, so fall back to navigating here if the tab is still around.
+    window.close();
+    setTimeout(function(){ location.href = '/'; }, 300);
+}
 function renderUserBar(){
     var el=document.getElementById('f-user');
     if(me){
         el.innerHTML='<span class="f-uname">'+esc(me.username)+'</span>'
             +(me.is_admin>=2?'<span class="f-role-admin">'+t('admin')+'</span>':me.is_admin>=1?'<span class="f-role-mod">'+t('mod')+'</span>':'')
-            +'<a href="/" class="f-game-link">'+t('go_game')+'</a>';
+            +'<a href="/" class="f-game-link" onclick="goBackToGame();return false;">'+t('go_game')+'</a>';
     } else {
         el.innerHTML='<span style="font-size:11px;color:rgba(212,205,164,0.35)">'+t('not_logged')+'</span>'
-            +'<a href="/" class="f-game-link">'+t('login_game')+'</a>';
+            +'<a href="/" class="f-game-link" onclick="goBackToGame();return false;">'+t('login_game')+'</a>';
     }
 }
 function setBreadcrumb(html){ document.getElementById('f-breadcrumb').innerHTML=html||''; }

@@ -1,6 +1,6 @@
 {
   "name": "unoweb",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "",
   "main": "index.js",
   "repository": "https://github.com/houseofbits/nodejs-uno-game",

@@ -472,8 +472,6 @@ module.exports = class GameRulesModel{
                     card.setType(cardData.type);
                 }
 
-                this.clearEvents();
-
                 if(this.pendingInteraction) return;
                 if(this.cardCanBePlaced(card)){
                     if(unoClient.removeCard(card)){
@@ -510,8 +508,6 @@ module.exports = class GameRulesModel{
 
         if(unoClient.getTurn()){
             if(this.pendingInteraction) return;
-
-            this.clearEvents();
 
             // Stacking mode: player takes the full accumulated penalty
             if(this.ruleset === 'stacking' && this.stackPending){

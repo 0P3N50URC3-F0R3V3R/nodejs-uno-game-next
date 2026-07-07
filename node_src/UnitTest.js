@@ -30,6 +30,10 @@ module.exports = class UnitTest{
         this.nextgenAIHeuristics();
         this.nextgenAITradeTargeting();
         this.nextgenHoarderElimination();
+        this.federationIdentity();
+        this.federationHash();
+        this.federationDB();
+        this.federationServiceInbound();
 
     }
     clientRepo(){
@@ -1005,6 +1009,203 @@ module.exports = class UnitTest{
         assert.strictEqual(b8.hasWon, false, 'round must NOT end yet — C and D are both still active');
         assert.strictEqual(c8.brEliminated, false, 'C must still be in play');
         assert.strictEqual(d8.brEliminated, false, 'D must still be in play');
+    }
+    federationIdentity(){
+        let FederationIdentity = require('./FederationIdentity.js');
+        let fs = require('fs');
+        let os = require('os');
+        let path = require('path');
+        let tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-'));
+
+        let id1 = new FederationIdentity(tmpDir);
+        assert.ok(id1.serverId, 'serverId must be generated');
+        assert.ok(id1.publicKey, 'publicKey must be generated');
+
+        let id2 = new FederationIdentity(tmpDir);
+        assert.strictEqual(id2.serverId, id1.serverId, 'identity must persist across reloads');
+        assert.strictEqual(id2.publicKey, id1.publicKey, 'publicKey must persist across reloads');
+
+        let sig = id1.sign('hello');
+        assert.strictEqual(FederationIdentity.verify(id1.publicKey, 'hello', sig), true, 'valid signature must verify');
+        assert.strictEqual(FederationIdentity.verify(id1.publicKey, 'tampered', sig), false, 'tampered data must fail verification');
+        assert.strictEqual(FederationIdentity.verify(id1.publicKey, 'hello', 'not-a-real-signature'), false, 'garbage signature must fail, not throw');
+
+        let oldPublicKey = id1.publicKey;
+        let oldServerId = id1.serverId;
+        id1.rotate();
+        assert.notStrictEqual(id1.publicKey, oldPublicKey, 'rotate must produce a new keypair');
+        assert.strictEqual(id1.serverId, oldServerId, 'rotate must not change serverId — only the keypair rotates');
+        assert.strictEqual(FederationIdentity.verify(oldPublicKey, 'hello', sig), true, 'old signature must still verify against the old (still-valid) public key value — rotate only affects this instance going forward');
+
+        let rawPrivateKey = JSON.parse(fs.readFileSync(id1.identityPath, 'utf8')).privateKey;
+        assert.strictEqual(Object.keys(id1).includes('privateKey'), false, 'privateKey must not be an enumerable own property of the instance');
+        assert.strictEqual(JSON.stringify(id1).includes(rawPrivateKey), false, 'serializing the instance must not leak the private key material');
+
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+    federationHash(){
+        let { computeServerHash } = require('./FederationHash.js');
+        let path = require('path');
+        let rootDir = path.join(__dirname, '..');
+
+        let hash1 = computeServerHash(rootDir);
+        let hash2 = computeServerHash(rootDir);
+        assert.strictEqual(hash1, hash2, 'hash must be deterministic for unchanged files');
+        assert.strictEqual(typeof hash1, 'string');
+        assert.strictEqual(hash1.length, 64, 'sha256 hex digest must be 64 chars');
+        assert.strictEqual(/^[0-9a-f]{64}$/.test(hash1), true, 'must be lowercase hex');
+    }
+    federationDB(){
+        let Database = require('better-sqlite3');
+        let FederationDB = require('./FederationDB.js');
+        let db = new Database(':memory:');
+        let fdb = new FederationDB(db);
+
+        let peer = fdb.addPeer('peer.example.com:5678');
+        assert.strictEqual(peer.status, 'Pending', 'new peer must default to Pending');
+        assert.strictEqual(peer.domain, 'peer.example.com:5678');
+
+        assert.throws(() => fdb.addPeer('peer.example.com:5678'), 'duplicate domain must be rejected');
+
+        fdb.updatePeerStatus(peer.id, { status: 'Connected', public_key: 'abc123', connected_at: 12345 });
+        let updated = fdb.getPeerById(peer.id);
+        assert.strictEqual(updated.status, 'Connected');
+        assert.strictEqual(updated.public_key, 'abc123');
+        assert.strictEqual(updated.connected_at, 12345);
+
+        assert.strictEqual(fdb.getPeerByDomain('peer.example.com:5678').id, peer.id);
+        assert.strictEqual(fdb.listPeers().length, 1);
+
+        let msg = fdb.addMessage(peer.id, 'outgoing', 'hello');
+        assert.strictEqual(msg.delivered, 0, 'outgoing messages start undelivered');
+        let incoming = fdb.addMessage(peer.id, 'incoming', 'hi back');
+        assert.strictEqual(incoming.delivered, 1, 'incoming messages are delivered by definition');
+
+        assert.strictEqual(fdb.listMessages(peer.id).length, 2);
+        assert.strictEqual(fdb.listUndelivered(peer.id).length, 1);
+
+        fdb.markDelivered(msg.id);
+        assert.strictEqual(fdb.listUndelivered(peer.id).length, 0);
+
+        fdb.deleteConversation(peer.id);
+        assert.strictEqual(fdb.listMessages(peer.id).length, 0, 'deleteConversation must wipe messages but keep the peer');
+        assert.ok(fdb.getPeerById(peer.id), 'peer row must survive deleteConversation');
+
+        let peer2 = fdb.addPeer('other.example.com:5679');
+        fdb.addMessage(peer2.id, 'outgoing', 'test');
+        fdb.deletePeer(peer2.id);
+        assert.strictEqual(fdb.getPeerById(peer2.id), undefined, 'deletePeer must remove the peer row');
+        assert.strictEqual(fdb.listMessages(peer2.id).length, 0, 'deletePeer must cascade-delete its messages');
+
+        fdb.addPeer('a.example.com:1');
+        fdb.addPeer('b.example.com:2');
+        fdb.wipeAll();
+        assert.strictEqual(fdb.listPeers().length, 0, 'wipeAll must remove every peer');
+
+        db.close();
+    }
+    federationServiceInbound(){
+        let Database = require('better-sqlite3');
+        let FederationDB = require('./FederationDB.js');
+        let FederationIdentity = require('./FederationIdentity.js');
+        let FederationService = require('./FederationService.js');
+        let fs = require('fs');
+        let os = require('os');
+        let path = require('path');
+
+        let db = new Database(':memory:');
+        let fdb = new FederationDB(db);
+        let tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-'));
+        let identity = new FederationIdentity(tmpDir);
+        let svc = new FederationService({
+            db: fdb, identity, getServerHash: () => 'HASH_A', ourDomain: 'a.example.com:1'
+        });
+
+        // handshake: unknown sender (no local record) must not create one
+        let r1 = svc.handleHandshakeRequest({ domain: 'stranger.example.com:9', publicKey: 'x', serverHash: 'HASH_A' });
+        assert.strictEqual(r1.status, 'unknown');
+        assert.strictEqual(fdb.getPeerByDomain('stranger.example.com:9'), undefined, 'must not create a record for an unrecognized sender');
+
+        // handshake: matching Pending peer + matching hash -> Connected
+        let peerB = fdb.addPeer('b.example.com:2');
+        let r2 = svc.handleHandshakeRequest({ domain: 'b.example.com:2', publicKey: 'pubkey-of-B', serverHash: 'HASH_A' });
+        assert.strictEqual(r2.status, 'connected');
+        assert.strictEqual(r2.publicKey, identity.publicKey, 'our reply must carry our own public key');
+        let updatedB = fdb.getPeerById(peerB.id);
+        assert.strictEqual(updatedB.status, 'Connected');
+        assert.strictEqual(updatedB.public_key, 'pubkey-of-B');
+
+        // handshake: matching Pending peer + mismatching hash -> Denied(hash_mismatch)
+        let peerC = fdb.addPeer('c.example.com:3');
+        let r3 = svc.handleHandshakeRequest({ domain: 'c.example.com:3', publicKey: 'pubkey-of-C', serverHash: 'DIFFERENT_HASH' });
+        assert.strictEqual(r3.status, 'denied');
+        let updatedC = fdb.getPeerById(peerC.id);
+        assert.strictEqual(updatedC.status, 'Denied');
+        assert.strictEqual(updatedC.denied_reason, 'hash_mismatch');
+
+        // handshake: already-Connected peer -> treated as keepalive, no state change
+        let r4 = svc.handleHandshakeRequest({ domain: 'b.example.com:2', publicKey: 'pubkey-of-B', serverHash: 'HASH_A' });
+        assert.strictEqual(r4.status, 'connected');
+        assert.strictEqual(r4.publicKey, identity.publicKey, 'keepalive reply must still carry our public key so a keyless re-adding sender can pin it');
+        assert.strictEqual(r4.serverHash, 'HASH_A');
+
+        // liveness: valid signature -> connected
+        // Simulate B signing with a real keypair we control, then store that as B's trusted public_key.
+        // The liveness contract signs over the nonce alone (see handleLivenessRequest implementation).
+        let nonce = 'test-nonce-123';
+        let bIdentity = new FederationIdentity(fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-b-')));
+        fdb.updatePeerStatus(peerB.id, { public_key: bIdentity.publicKey });
+        let goodSig = bIdentity.sign(nonce);
+        let r5 = svc.handleLivenessRequest({ domain: 'b.example.com:2', nonce, signature: goodSig });
+        assert.strictEqual(r5.status, 'connected');
+        assert.strictEqual(r5.serverHash, 'HASH_A', 'liveness reply must carry our current hash so the caller can detect drift');
+
+        // liveness: bad signature -> key_mismatch
+        let r6 = svc.handleLivenessRequest({ domain: 'b.example.com:2', nonce, signature: 'garbage' });
+        assert.strictEqual(r6.status, 'key_mismatch');
+
+        // liveness: unknown domain -> unknown
+        let r7 = svc.handleLivenessRequest({ domain: 'nope.example.com:0', nonce, signature: 'whatever' });
+        assert.strictEqual(r7.status, 'unknown');
+
+        // liveness: a peer we've locally marked Denied must not report 'connected'
+        // even with a technically-valid signature — our own status gates the reply too.
+        fdb.updatePeerStatus(peerC.id, { public_key: bIdentity.publicKey, status: 'Denied' });
+        let sigForC = bIdentity.sign(nonce);
+        let r7b = svc.handleLivenessRequest({ domain: 'c.example.com:3', nonce, signature: sigForC });
+        assert.strictEqual(r7b.status, 'unknown', 'a Denied peer must not receive a connected liveness reply');
+
+        // liveness: a peer we've locally Suspended is a purely local, one-sided pause —
+        // it must still answer the peer's liveness ping as 'connected' (silent pause only
+        // stops OUR outbound polling; it must not break what we tell THEM).
+        fdb.updatePeerStatus(peerC.id, { status: 'Suspended' });
+        let r7c = svc.handleLivenessRequest({ domain: 'c.example.com:3', nonce, signature: sigForC });
+        assert.strictEqual(r7c.status, 'connected', 'a Suspended peer must still receive a connected liveness reply (local-only pause)');
+        assert.strictEqual(r7c.serverHash, 'HASH_A');
+
+        // message: valid signature on a Connected peer -> accepted and stored
+        let msgSig = bIdentity.sign('b.example.com:2' + 'hello there' + 5000);
+        let accepted = svc.handleMessageRequest({ senderDomain: 'b.example.com:2', body: 'hello there', timestamp: 5000, signature: msgSig });
+        assert.strictEqual(accepted, true);
+        assert.strictEqual(fdb.listMessages(peerB.id).length, 1);
+        assert.strictEqual(fdb.listMessages(peerB.id)[0].direction, 'incoming');
+
+        // message: bad signature -> rejected, not stored
+        let rejected = svc.handleMessageRequest({ senderDomain: 'b.example.com:2', body: 'forged', timestamp: 5001, signature: 'garbage' });
+        assert.strictEqual(rejected, false);
+        assert.strictEqual(fdb.listMessages(peerB.id).length, 1, 'forged message must not be stored');
+
+        // unlink: valid signature -> peer deleted
+        let unlinkSig = bIdentity.sign('b.example.com:2');
+        svc.handleUnlinkRequest({ domain: 'b.example.com:2', signature: unlinkSig });
+        assert.strictEqual(fdb.getPeerById(peerB.id), undefined, 'valid signed unlink must delete the peer');
+
+        // unlink: bad signature on remaining peer -> ignored
+        fdb.updatePeerStatus(peerC.id, { public_key: bIdentity.publicKey, status: 'Connected' });
+        svc.handleUnlinkRequest({ domain: 'c.example.com:3', signature: 'garbage' });
+        assert.ok(fdb.getPeerById(peerC.id), 'unsigned/forged unlink must not delete the peer');
+
+        db.close();
     }
 
 };

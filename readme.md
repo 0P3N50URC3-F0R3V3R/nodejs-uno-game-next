@@ -27,6 +27,17 @@ A multiplayer browser-based UNO card game with persistent accounts, achievements
 - Spin-wheel animation for selecting the first player
 - 6 customizable table backgrounds
 
+### Federation Networking - Prototype
+
+## THIS IS A PROTOTYPE FEATURE, NOT TESTED!!! NOT FINISHED!
+
+- Now you can federate servers.  You can add each other server's in the admin interface, and the server's can collaborate in games.
+Both server owners need to add each other server:port in admin interface, only after that will handshake happen. After that they 
+will sync player ID's, and exchange keys. After each server users can play with other server's players, in the background there are 
+channel and user syncing, even the hall of fame.
+
+## THIS IS A PROTOTYPE FEATURE, NOT TESTED!!! NOT FINISHED!
+
 ### User Accounts
 - Register and login with persistent profiles
 - Avatar upload (auto-cropped to 250×250 PNG)
@@ -129,6 +140,15 @@ Bulgarian · Czech · Danish · German · Greek · English · Spanish · Finnish
 ### Requirements
 - Node.js 16+
 - npm
+
+### Docker
+
+```bash
+docker-compose up
+```
+
+Runs the built app in a container accessible on your local network.
+
 
 ### Local development
 

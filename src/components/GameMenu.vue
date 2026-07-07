@@ -50,18 +50,6 @@
             </div>
 
             <div class="gmenu-section">
-                <div class="gmenu-sec-label">{{ t('ruleset') }}</div>
-                <label class="gmenu-radio" :class="{ active: localRuleset === 'original' }">
-                    <input type="radio" value="original" v-model="localRuleset" @change="onRuleChange"/>
-                    <span>{{ t('ruleset_original_short') }}</span>
-                </label>
-                <label class="gmenu-radio" :class="{ active: localRuleset === 'stacking' }">
-                    <input type="radio" value="stacking" v-model="localRuleset" @change="onRuleChange"/>
-                    <span>{{ t('ruleset_stacking_short') }}</span>
-                </label>
-            </div>
-
-            <div class="gmenu-section">
                 <label class="gmenu-checkbox" :class="{ active: localPersonalHardcore }">
                     <input type="checkbox" v-model="localPersonalHardcore" @change="onPersonalHardcoreChange"/>
                     <span>{{ t('personal_hardcore_mode') }}</span>
@@ -102,7 +90,7 @@
 
     export default {
         name: 'GameMenu',
-        props: ['socket', 'ruleset', 'quitHandler', 'isHost', 'tableIndex', 'personalHardcoreMode'],
+        props: ['socket', 'quitHandler', 'isHost', 'tableIndex', 'personalHardcoreMode'],
         data: function() {
             let pinned = localStorage.getItem('panel_pin_gmenu') === 'true';
             return {
@@ -111,7 +99,6 @@
                 panelZ: 300,
                 confirmRestart: false,
                 confirmQuit: false,
-                localRuleset: this.ruleset || 'original',
                 localPersonalHardcore: !!this.personalHardcoreMode,
                 tableImages: TABLE_IMAGES,
                 ownedBgs: [],
@@ -125,7 +112,6 @@
         },
         beforeDestroy: function() { unregisterPanel('gmenu'); },
         watch: {
-            ruleset: function(v) { this.localRuleset = v; },
             personalHardcoreMode: function(v) { this.localPersonalHardcore = !!v; }
         },
         methods: {
@@ -159,9 +145,6 @@
                 this.quitHandler();
                 this.confirmQuit = false;
                 this.open = false;
-            },
-            onRuleChange: function() {
-                this.socket.emit('changeRule', { ruleset: this.localRuleset });
             },
             onPersonalHardcoreChange: function() {
                 this.$emit('personal-hardcore-change', this.localPersonalHardcore);
@@ -313,29 +296,6 @@
     .gmenu-btn-no {
         flex: 1;
         text-align: center;
-    }
-
-    .gmenu-radio {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 0;
-        cursor: pointer;
-        color: #d4cda4;
-        font-size: 11px;
-        font-weight: bold;
-        font-family: "Trebuchet MS", Helvetica, sans-serif;
-        border-radius: 4px;
-        transition: color 0.1s;
-    }
-    .gmenu-radio.active { color: #ffdd00; }
-    .gmenu-radio input[type="radio"] {
-        accent-color: #ffb833;
-        width: 13px;
-        height: 13px;
-        margin: 0;
-        flex-shrink: 0;
-        cursor: pointer;
     }
 
     .gmenu-checkbox {

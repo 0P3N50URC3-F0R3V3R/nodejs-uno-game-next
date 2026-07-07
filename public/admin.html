@@ -34,6 +34,11 @@ tr:hover td { background: rgba(154,101,21,0.08); }
 .modal h3 { color: #ffdd00; font-size: 14px; letter-spacing: 1px; margin-bottom: 14px; }
 .modal-btns { display: flex; gap: 8px; margin-top: 10px; }
 .lv-badge { background: rgba(109,232,109,0.15); border: 1px solid rgba(109,232,109,0.3); color: #6de86d; border-radius: 3px; padding: 1px 6px; font-size: 11px; font-weight: bold; }
+.fed-badge { border-radius: 3px; padding: 1px 6px; font-size: 11px; font-weight: bold; border: 1px solid; }
+.fed-badge.st-connected { background: rgba(109,232,109,0.15); border-color: rgba(109,232,109,0.3); color: #6de86d; }
+.fed-badge.st-denied, .fed-badge.st-error { background: rgba(220,60,60,0.15); border-color: rgba(220,60,60,0.4); color: #ff8888; }
+.fed-badge.st-pending, .fed-badge.st-unreachable { background: rgba(255,184,51,0.15); border-color: rgba(255,184,51,0.4); color: #ffb833; }
+.fed-badge.st-suspended { background: rgba(212,205,164,0.1); border-color: rgba(212,205,164,0.3); color: rgba(212,205,164,0.6); }
 .xp-text { color: rgba(212,205,164,0.5); font-size: 11px; }
 .av-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(154,101,21,0.4); vertical-align: middle; }
 .stat-row { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
@@ -80,6 +85,7 @@ tr:hover td { background: rgba(154,101,21,0.08); }
         <button class="admin-tab-btn" onclick="switchTab('store',this)">STORE</button>
         <button class="admin-tab-btn" onclick="switchTab('news',this)">NEWS</button>
         <button class="admin-tab-btn" onclick="switchTab('forum',this)">FORUM</button>
+        <button class="admin-tab-btn" onclick="switchTab('federation',this)">FEDERATION</button>
     </nav>
 
     <!-- TAB: USERS -->
@@ -233,6 +239,30 @@ tr:hover td { background: rgba(154,101,21,0.08); }
             <div id="news-list"></div>
         </div>
     </div>
+
+    <!-- TAB: FEDERATION -->
+    <div class="tab-pane" id="tab-federation">
+        <div class="card">
+            <div style="font-size:11px;color:rgba(212,205,164,0.5);letter-spacing:1.5px;margin-bottom:14px">ADD PEER</div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <input type="text" id="fed-new-domain" placeholder="peer.example.com:5678" style="margin-bottom:0"/>
+                <button class="btn-primary btn-sm" onclick="fedAddPeer()">ADD PEER</button>
+            </div>
+            <div id="fed-add-msg" style="font-size:12px;margin-top:6px"></div>
+        </div>
+        <div class="card">
+            <label style="font-size:11px;color:rgba(212,205,164,0.5);letter-spacing:1px">
+                <input type="checkbox" id="fed-advanced-toggle" onchange="fedToggleAdvanced()"/> ADVANCED MODE
+            </label>
+            <div id="fed-advanced-panel" style="display:none;margin-top:12px"></div>
+        </div>
+        <div class="card" style="padding:0;overflow-x:auto">
+            <table>
+                <thead><tr><th>DOMAIN</th><th>STATUS</th><th>ADDED</th><th>LAST CHECKED</th><th>ACTIONS</th></tr></thead>
+                <tbody id="fed-peer-tbody"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <!-- RENAME MODAL -->
@@ -313,8 +343,22 @@ tr:hover td { background: rgba(154,101,21,0.08); }
     </div>
 </div>
 
+<!-- FEDERATION CHAT MODAL -->
+<div class="modal-bg" id="fed-chat-modal-bg">
+    <div class="modal" style="width:480px">
+        <h3>FEDERATION CHAT</h3>
+        <div id="fed-chat-log" style="max-height:300px;overflow-y:auto;margin-bottom:10px;font-size:13px"></div>
+        <textarea id="fed-chat-input" style="width:100%;min-height:60px;background:rgba(0,0,0,0.5);border:1px solid rgba(154,101,21,0.6);border-radius:4px;color:#fff;font-family:inherit;padding:6px 10px"></textarea>
+        <div class="modal-btns">
+            <button class="btn-primary" onclick="fedSendChat()">SEND</button>
+            <button class="btn-danger" onclick="fedDeleteConversation()">DELETE CONVERSATION</button>
+            <button class="btn-primary" onclick="fedCloseChat()">CLOSE</button>
+        </div>
+    </div>
+</div>
+
 <script>
-var adminToken = '';
+var adminToken = localStorage.getItem('unoAdminToken') || '';
 var captchaToken = '';
 var targetUserId = null;
 
@@ -349,18 +393,31 @@ function doLogin() {
     })
     .then(function(d){
         adminToken = d.adminToken;
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('admin-screen').style.display = '';
-        loadUsers();
-        loadSettings();
-        loadStore();
-        loadGoldSettings();
-        loadNews();
+        localStorage.setItem('unoAdminToken', adminToken);
+        showAdminScreen();
     })
     .catch(function(e){
         document.getElementById('login-error').textContent = e.message || 'Error';
         loadCaptcha();
     });
+}
+
+function showAdminScreen() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = '';
+    loadUsers();
+    loadSettings();
+    loadStore();
+    loadGoldSettings();
+    loadNews();
+}
+
+function showLoginScreen() {
+    adminToken = '';
+    localStorage.removeItem('unoAdminToken');
+    document.getElementById('admin-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = '';
+    loadCaptcha();
 }
 
 function loadUsers() {
@@ -591,7 +648,7 @@ document.querySelectorAll('.modal-bg').forEach(function(m){
     m.addEventListener('click', function(e){ if(e.target === m) m.classList.remove('open'); });
 });
 
-setInterval(function(){ if(adminToken && document.getElementById('admin-screen').style.display !== 'none') loadUsers(); }, 30000);
+setInterval(function(){ if(adminToken && document.getElementById('admin-screen').style.display !== 'none') { loadUsers(); if (document.getElementById('tab-federation').classList.contains('active')) loadFederationPeers(); } }, 30000);
 
 /* ── TAB SWITCHING ── */
 function switchTab(name, btn) {
@@ -600,6 +657,13 @@ function switchTab(name, btn) {
     document.getElementById('tab-'+name).classList.add('active');
     btn.classList.add('active');
     if (name === 'forum') loadForumBoards();
+    if (name === 'federation') {
+        loadFederationPeers();
+        const advOn = localStorage.getItem('fedAdvancedMode') === '1';
+        document.getElementById('fed-advanced-toggle').checked = advOn;
+        document.getElementById('fed-advanced-panel').style.display = advOn ? 'block' : 'none';
+        if (advOn) fedLoadAdvancedPanel();
+    }
 }
 
 /* ── STORE ── */
@@ -1006,7 +1070,205 @@ function forumDeleteBoard(id) {
         .then(function(){ loadForumBoards(); });
 }
 
-loadCaptcha();
+/* ── FEDERATION ── */
+let fedChatPeerId = null;
+let fedChatPollTimer = null;
+
+async function fedOpenChat(id) {
+    fedChatPeerId = id;
+    document.getElementById('fed-chat-modal-bg').classList.add('open');
+    await fedLoadChat();
+    fedChatPollTimer = setInterval(fedLoadChat, 5000);
+}
+
+function fedCloseChat() {
+    document.getElementById('fed-chat-modal-bg').classList.remove('open');
+    clearInterval(fedChatPollTimer);
+    fedChatPeerId = null;
+}
+
+async function fedLoadChat() {
+    if (!fedChatPeerId) return;
+    const res = await fetch(`/api/admin/federation/peers/${fedChatPeerId}/messages`, { headers: authHeaders() });
+    const messages = await res.json();
+    document.getElementById('fed-chat-log').innerHTML = messages.map(m =>
+        `<div><b>${m.direction === 'outgoing' ? 'US' : 'THEM'}:</b> ${esc(m.body)}</div>`
+    ).join('');
+}
+
+async function fedSendChat() {
+    const input = document.getElementById('fed-chat-input');
+    const body = input.value.trim();
+    if (!body || !fedChatPeerId) return;
+    await fetch(`/api/admin/federation/peers/${fedChatPeerId}/messages`, {
+        method: 'POST', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ body })
+    });
+    input.value = '';
+    await fedLoadChat();
+}
+
+async function fedDeleteConversation() {
+    if (!fedChatPeerId || !confirm('Delete this conversation? This only clears your local copy.')) return;
+    await fetch(`/api/admin/federation/peers/${fedChatPeerId}/messages`, { method: 'DELETE', headers: authHeaders() });
+    await fedLoadChat();
+}
+
+function fedToggleAdvanced() {
+    const on = document.getElementById('fed-advanced-toggle').checked;
+    localStorage.setItem('fedAdvancedMode', on ? '1' : '0');
+    document.getElementById('fed-advanced-panel').style.display = on ? 'block' : 'none';
+    if (on) fedLoadAdvancedPanel();
+    loadFederationPeers();
+}
+
+async function fedLoadAdvancedPanel() {
+    const panel = document.getElementById('fed-advanced-panel');
+    const res = await fetch('/api/admin/federation/identity', { headers: authHeaders() });
+    if (res.status === 404) {
+        panel.innerHTML = '<div class="error">Advanced mode is disabled on this server (set federationDebugEnabled in config.json to enable).</div>';
+        return;
+    }
+    const identity = await res.json();
+    panel.innerHTML = `
+        <div class="stat-row"><span class="stat-label">Server ID</span><span>${esc(identity.serverId)}</span></div>
+        <div class="stat-row"><span class="stat-label">Public Key</span><span style="word-break:break-all;font-size:11px">${esc(identity.publicKey)}</span></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn-danger btn-sm" onclick="fedRotateKeypair()">ROTATE KEYPAIR</button>
+            <button class="btn-primary btn-sm" onclick="fedPollNow()">FORCE POLL NOW</button>
+            <button class="btn-danger btn-sm" onclick="fedWipeAll()">WIPE FEDERATION DB</button>
+        </div>
+    `;
+}
+
+async function fedRotateKeypair() {
+    if (!confirm('Rotate keypair? Every currently Connected peer will fail its next liveness check and drop to Denied — not just one link.')) return;
+    await fetch('/api/admin/federation/identity/rotate', { method: 'POST', headers: authHeaders() });
+    fedLoadAdvancedPanel();
+}
+
+async function fedPollNow() {
+    await fetch('/api/admin/federation/poll-now', { method: 'POST', headers: authHeaders() });
+    loadFederationPeers();
+}
+
+async function fedWipeAll() {
+    const typed = prompt('This deletes every peer and message. Type WIPE to confirm.');
+    if (typed !== 'WIPE') return;
+    await fetch('/api/admin/federation/wipe', { method: 'DELETE', headers: authHeaders() });
+    loadFederationPeers();
+}
+
+function fedStatusActions(peer, advancedOn) {
+    let actions;
+    if (peer.status === 'Connected' || peer.status === 'Unreachable') {
+        actions = `<button class="btn-primary btn-sm" onclick="fedOpenChat(${peer.id})">CHAT</button> <button class="btn-primary btn-sm" onclick="fedSuspend(${peer.id})">SUSPEND</button> <button class="btn-danger btn-sm" onclick="fedRemove(${peer.id})">REMOVE</button>`;
+    } else if (peer.status === 'Suspended') {
+        actions = `<button class="btn-primary btn-sm" onclick="fedResume(${peer.id})">RESUME</button> <button class="btn-danger btn-sm" onclick="fedRemove(${peer.id})">REMOVE</button>`;
+    } else {
+        actions = `<button class="btn-danger btn-sm" onclick="fedRemove(${peer.id})">REMOVE</button>`;
+    }
+    if (advancedOn) {
+        actions += ` <button class="btn-primary btn-sm" onclick="fedOverridePubkey(${peer.id})">SET KEY</button> <button class="btn-primary btn-sm" onclick="fedOverrideStatus(${peer.id})">SET STATUS</button> <button class="btn-primary btn-sm" onclick="fedShowDebug(${peer.id})">DEBUG</button>`;
+    }
+    return actions;
+}
+
+function fedTimeAgo(ts) {
+    if (!ts) return '—';
+    var s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60) return s + 's ago';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    return Math.floor(s / 86400) + 'd ago';
+}
+
+async function loadFederationPeers() {
+    const res = await fetch('/api/admin/federation/peers', { headers: authHeaders() });
+    const peers = await res.json();
+    const advancedOn = localStorage.getItem('fedAdvancedMode') === '1';
+    const tbody = document.getElementById('fed-peer-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = peers.map(p => `
+        <tr>
+            <td>${esc(p.domain)}</td>
+            <td><span class="fed-badge st-${p.status.toLowerCase()}">${p.status.toUpperCase()}</span></td>
+            <td>${fedTimeAgo(p.added_at)}</td>
+            <td>${fedTimeAgo(p.last_checked_at)}</td>
+            <td class="td-actions">${fedStatusActions(p, advancedOn)}</td>
+        </tr>
+    `).join('');
+}
+
+async function fedAddPeer() {
+    var domain = document.getElementById('fed-new-domain').value.trim();
+    var msgEl = document.getElementById('fed-add-msg');
+    if (!domain) { msgEl.textContent = 'Domain required'; msgEl.className = 'error'; return; }
+    var res = await fetch('/api/admin/federation/peers', {
+        method: 'POST', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ domain: domain })
+    });
+    var data = await res.json();
+    if (res.ok) {
+        msgEl.textContent = 'Peer added, status Pending';
+        msgEl.className = 'success';
+        document.getElementById('fed-new-domain').value = '';
+        loadFederationPeers();
+    } else {
+        msgEl.textContent = data.error || 'Failed to add peer';
+        msgEl.className = 'error';
+    }
+}
+
+async function fedSuspend(id) {
+    await fetch('/api/admin/federation/peers/'+id+'/suspend', { method: 'PUT', headers: authHeaders() });
+    loadFederationPeers();
+}
+
+async function fedResume(id) {
+    await fetch('/api/admin/federation/peers/'+id+'/resume', { method: 'PUT', headers: authHeaders() });
+    loadFederationPeers();
+}
+
+async function fedRemove(id) {
+    if (!confirm('Remove this federation peer?')) return;
+    await fetch('/api/admin/federation/peers/'+id, { method: 'DELETE', headers: authHeaders() });
+    loadFederationPeers();
+}
+
+async function fedOverridePubkey(id) {
+    const publicKey = prompt('Paste the peer\'s new public key (base64), obtained out-of-band:');
+    if (!publicKey) return;
+    await fetch(`/api/admin/federation/peers/${id}/pubkey-override`, {
+        method: 'PUT', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ publicKey })
+    });
+    loadFederationPeers();
+}
+
+async function fedOverrideStatus(id) {
+    const status = prompt('New status — one of: Pending, Connected, Denied, Error, Unreachable, Suspended');
+    if (!status) return;
+    await fetch(`/api/admin/federation/peers/${id}/status-override`, {
+        method: 'PUT', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ status })
+    });
+    loadFederationPeers();
+}
+
+async function fedShowDebug(id) {
+    const res = await fetch('/api/admin/federation/peers', { headers: authHeaders() });
+    const peers = await res.json();
+    const peer = peers.find(p => p.id === id);
+    alert(peer && peer.debug_last_response ? peer.debug_last_response : 'No debug data recorded yet.');
+}
+
+// A stored token means we were logged in before this refresh — the server-side
+// session lasts 4 hours, so validate it with a cheap authenticated call instead of
+// always forcing the captcha again. Falls back to the login screen if it's expired.
+if (adminToken) {
+    fetch('/api/admin/users', { headers: authHeaders() })
+        .then(function(r){ if (!r.ok) throw new Error('expired'); return showAdminScreen(); })
+        .catch(function(){ showLoginScreen(); });
+} else {
+    loadCaptcha();
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,1792 @@
+[
+  {
+    "type": "background",
+    "file_path": "anim-background/01f19b0271d770fe620f3e458153a1f2e2ac6561.webm",
+    "name": "Wormhole 1",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/04195a19aeac893a6ec29b318e968072038c1bfc.webm",
+    "name": "Caution",
+    "description": "",
+    "price": 101,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/0f74e2190e5fbf6a9c603cefb0b857e1f2d54828.webm",
+    "name": "Cyber Hyper",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/18edeb60ffcb80ccd629f8d96aa5a9cb71ae9104.webm",
+    "name": "Fantasy",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/1c249ad907ad6d74701d503d8565131bfa7b0109.webm",
+    "name": "Purple Fog",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/1e10d81ef3d7a7006d1a404902ec29f0b8f277da.webm",
+    "name": "Retro 1",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/21fdea4af27a2a9a9bafac656da8f2b8c5593ed9.webm",
+    "name": "Neon Triangle",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/31d5057185eccc112d5da95583d8ca0efae842ac.webm",
+    "name": "Wormhole 2",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/39c4c86a4eae6acdcb2be794f8b69d7c09482af0.webm",
+    "name": "Portal Loop",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/3e399b4256d234556f2d2c02e4ac3a1410b98a11.webm",
+    "name": "Stars",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/47041e47b0da2e7f73ee70a78aaf81207d3dcafe.webm",
+    "name": "Travel",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/4ada83b92da04393aa902804deeadb4493bb5644.webm",
+    "name": "Cyberspace",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/4ccb0ad7493c0bae930a0b09c1c475871110577b.webm",
+    "name": "Electric",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/53541a570b268192d8264562b5aee9f6cceaf5b5.webm",
+    "name": "Green Hole",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/55b05a808062091eea5fdb59e5307067d6713fc7.webm",
+    "name": "Glitter",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/74a6a3a8aeaf47db9597ed52b4091b20fa58e9fb.webm",
+    "name": "Dark Matter",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/754d3d33b9deefe4099b877942a800a985920ab2.webm",
+    "name": "Car",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/76562c87ea07f14e372eeed328af196b224142fd.webm",
+    "name": "Retrowave 1",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/78ac96a35e5c9496440cb8a286dbef0f4fa0d2ef.webm",
+    "name": "Retrowave 2",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/8aac02d1b10371b8bb5bbc6a7a1720a6b2d9ffc3.webm",
+    "name": "Stellar Fog",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/8c8b720bbda03d7d170b54ffd06e451bbf38fd2e.webm",
+    "name": "White",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/8ec8230625bb7742e287dcf276666b3ab2767148.webm",
+    "name": "Glitter Dust",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/9091c72a3539da5d5981fbff920c38c5565881ca.webm",
+    "name": "Abstract",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/a1993d83938d3d59e7ce9eeccd98b2a178fbebeb.webm",
+    "name": "Darkness",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/b0773e1a9f8fbf35fce4e6e5bb3d337ad88adca5.webm",
+    "name": "Dust",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/b320f32f8158c38f95ce5360744a66cc24803698.webm",
+    "name": "Green",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/bd2bd9d4ddb7fccb2e9c960656ef11b2dd9a95b2.webm",
+    "name": "Blue Swirl",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/c6144705ee4ddfa543ee87fb9c54b8fb74fde586.webm",
+    "name": "Traversal",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/c80fef0dff41ae25ed0c806e09fba1e8065448d1.webm",
+    "name": "Rainy Day",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/cb0599011bfe9f3e28609d6e103605b5d644ba9a.webm",
+    "name": "Retrowave 3",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/d617ee5082bd8ae94169308f72bc21ada421f050.webm",
+    "name": "Stripes",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/d97312112bd2e0e9f3e88a76f6ae573736100d5e.webm",
+    "name": "Wormhole 3",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/d9cbcceb0fbf9be87d4aa0f8a60e7a90598c3230.webm",
+    "name": "Gloden Dust",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/da700e38f709f8211f7be436a000eec6bb2695aa.webm",
+    "name": "Programming",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/da7827806abfcb0f0c75223f4efca0d316724585.webm",
+    "name": "Borealis",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/df90258a82323b0c75b7b09b52aa942297ec22f0.webm",
+    "name": "Golden Dust 2",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/e90758faed2f65ff34ccc7225a9b4ba47d94bd04.webm",
+    "name": "Bubbles",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "background",
+    "file_path": "anim-background/f70a0d81cff1992dbcd4705489589d893878d728.webm",
+    "name": "Quantum",
+    "description": "",
+    "price": 200,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "name_effect",
+    "file_path": "",
+    "name": "Flames",
+    "description": "Blazing orange fire glow",
+    "price": 20,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"cssClass\":\"name-fire\"}"
+  },
+  {
+    "type": "name_effect",
+    "file_path": "",
+    "name": "Icecube",
+    "description": "Cool blue ice shimmer",
+    "price": 400,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"cssClass\":\"name-ice\"}"
+  },
+  {
+    "type": "name_effect",
+    "file_path": "",
+    "name": "Glitter",
+    "description": "Shining golden glow",
+    "price": 500,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"cssClass\":\"name-gold\"}"
+  },
+  {
+    "type": "name_effect",
+    "file_path": "",
+    "name": "Shades",
+    "description": "Dark crimson shadow",
+    "price": 300,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"cssClass\":\"name-shadow\"}"
+  },
+  {
+    "type": "name_effect",
+    "file_path": "",
+    "name": "Rainbow ",
+    "description": "Cycling rainbow colors",
+    "price": 500,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"cssClass\":\"name-rainbow\"}"
+  },
+  {
+    "type": "name_effect",
+    "file_path": "",
+    "name": "Rainbow Sweep",
+    "description": "Gradient sweeping all colors",
+    "price": 700,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"cssClass\":\"name-rainbow-sweep\"}"
+  },
+  {
+    "type": "name_effect",
+    "file_path": "",
+    "name": "BG Gradient",
+    "description": "Animated vertical blue-green",
+    "price": 600,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"cssClass\":\"name-bg-gradient\"}"
+  },
+  {
+    "type": "name_effect",
+    "file_path": "",
+    "name": "Gold",
+    "description": "Sparkling golden glitter",
+    "price": 800,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"cssClass\":\"name-glitter\"}"
+  },
+  {
+    "type": "name_effect",
+    "file_path": "",
+    "name": "Electric",
+    "description": "Flickering electric sparks",
+    "price": 800,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"cssClass\":\"name-electric\"}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/039f60a0d1438bbf2f4cf27f658cef2a541a7ce7.png",
+    "name": "Mouse PI",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/054e18ad9fd01782a260316f27bf96044e8b5869.png",
+    "name": "Darkside",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/05ee638859c560a8ffd09664debfe41d491aa9f3.png",
+    "name": "Pinky",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/06bb85cd5f39a963a39ae9327ea4eb7da5cd30d4.png",
+    "name": "Neon 1",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/083c19cc935001ee0508aff3b948da62b6a093f6.png",
+    "name": "Miasma",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/0a8f2aff19ee38cdbe3fcfeaf18bcf1fb33537b8.png",
+    "name": "Thing",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/0c8e9c99fc3ec1a9318a3691010aef82b6879391.png",
+    "name": "Neon 2",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/10146b746edb15a137814d1b8fbba21c622021f4.png",
+    "name": "Cartoon 1",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/10e9cfdba7a2fa5da3fb68ef801db58916d7f166.png",
+    "name": "Blue Swirl",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/15d2b45029778e114548f215e6e25bd66284dc66.png",
+    "name": "Red Swirl",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/18717998311ff5e68b1246dbdb43cbc0fa00a35d.png",
+    "name": "VHS",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/197bf59f36816e4b2aed6a55a9a07c112740de7d.png",
+    "name": "Storm",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/19d5a59bf7663f530cfa6183a8002ad27b31fb60.png",
+    "name": "Shark",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/1a05a372467f6f34d27014939133395ae9259ca4.png",
+    "name": "Pink Glitter",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2088aeaa172a240b51735fb50f1cf5039ce81663.png",
+    "name": "Electricute",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/20d7190a47a840e562541b12c9444de7e274ff35.png",
+    "name": "Snake",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2125a5925f779296bd416971993ae72ce529946d.png",
+    "name": "Ghosting",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/212888dbbd511ca6e99ff2429b51905ced8e2994.png",
+    "name": "Purple Miasma",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2189228dfa76f3a301dbd9b9f3dcc3700e9b5c8d.png",
+    "name": "Glitch",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/21e16e44e5797d4a44946507b45bba9cb4f9eefc.png",
+    "name": "Spoty",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/239a7a10aa4c46ad80f440719c261f472f36fdb3.png",
+    "name": "Green Frame",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/26ee4909581272c785317f0034c2254c8b92ec2c.png",
+    "name": "VHS 2",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/27736cefed1a3045712b562d6af8ca8c5a746a55.png",
+    "name": "Rabbit",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/27ef3d62a0e42bf4ac60d426f2f172e1790ec0fd.png",
+    "name": "Cathy",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2a0d5551b428ce2c7d8af1b6c927b449527df54f.png",
+    "name": "Venom",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2a551eef9c78d75531ca15fecf8a259038f0c703.png",
+    "name": "Food",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2bf93aac625023d2dbe474efa55c24ba2ad963ce (1).png",
+    "name": "Highway",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2d13e6d318951a14b1a0fc33feb8481077ca425d.png",
+    "name": "Melody",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2d876cff5940a8724340a5798c1c8e48880c675f.png",
+    "name": "Rainbow",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2da1201225a772b54ce2d35903ade3a77f0f3b8a.png",
+    "name": "Electric Fence",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2e2a13d3d7291021ed040ec2ff40b995ccb446e8.png",
+    "name": "Triangle",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2e57ffef54e7fd81cd620570a405467d02d53093.png",
+    "name": "Purple Soundtrack",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/32c1a25966e87769ec6bcca824223abf6a53d182.png",
+    "name": "Red Wobble",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/338a6356da64361a95a9d7064c0e35e2f7bbbf9e.png",
+    "name": "Purple Neon light",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/3bee53ed573a561275f253839efe760dd0236054.png",
+    "name": "Pencil",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/3c64a25739fd5669308c2027feefc3a5c2badaf9.png",
+    "name": "Beating",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/3e0d6b4c14110cacd930e1342e7bf3fa52b1b1cf.png",
+    "name": "Ecto",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/3f8c87a538453f3c8686f7f693306a7cc47fc2f3.png",
+    "name": "Drawing",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/3fd73db5d33e9b6597e6975eb654e89b89b5db5c.png",
+    "name": "Quick Neon",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/400a2d0836f66c37626071ef8ae10554b481bd80.png",
+    "name": "Quiet",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/40dc30f07e2f1ca891103d4b0a8836d6c4abfd38.png",
+    "name": "Want to belive",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/428f1396bc286171453101c9b407006fa985544b.png",
+    "name": "Windows Glitch",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/439d9f4d4c5493d5047e0d1fda5e764f792fdd78.png",
+    "name": "Burn",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/441c842d0a004472197b448c5dc26e4ab43afe37.png",
+    "name": "White Burn",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/46075f95a7b565e0ba7e4b74750ebe337d63a29f.png",
+    "name": "Glowing Cyan",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/48bc0153b3bd4ce9eca5cdbef97d5d7d062985f4.png",
+    "name": "Godrays",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/4957cc68eec4c2d9ee1df6de65f073951d1e94ee.png",
+    "name": "Glicthing neon",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/49b51d489abb471648eaa2347b454818e032619a.png",
+    "name": "Goldfog",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/4a6f346131032d587797c696ca1a9bdf61d47222.png",
+    "name": "Money Rain",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/4cfa3e9a5456b714823c1173d7ebd0615ae57910.png",
+    "name": "Red Portal",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/52e8004c33ef957fa32c700e4b5eaa8e5f34f8c7.png",
+    "name": "Retro Beat",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/5421e06fe05d8f9c5ea41ee4ca20af7510eddd4a.png",
+    "name": "Smoking",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/5c0db2c83b5ea9a13e713251d1878b95710cf138.png",
+    "name": "Vistaframe",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/5dc6aecbf1b2e58a09a5ce9ed2ad5c222fb94e0a.png",
+    "name": "Cyclic",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/5dc742c5dcbbe8c2f4f225fd8114c94b8910a397.png",
+    "name": "Blue Flame",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/6156eb71cc83cbbae8d08399e952bafaf8a7f156.png",
+    "name": "Dark Forest",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/62acb2d87a32cb26082a8319bd588102b4e33322.png",
+    "name": "Gold Electric",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/63abe72f9ea57defcf13b125cb91dcf692bf7b6e.png",
+    "name": "Neonglitch",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/66ba09e3951a8d16f5f3c3c96c2e0bf7282c42ec.png",
+    "name": "Loading",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/67142bf632f19d946eaa250a14d776b550d52f4d.png",
+    "name": "Shimmering",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/6b555763a9ff0815cff7d45480f03ff4d1ca4ab3.png",
+    "name": "Stardust",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/6e1b5f5977036a189465f5455f2c54722c12883d.png",
+    "name": "Shadowframe",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/717f8645fa31bec75d343abced8761672254f74d.png",
+    "name": "Pinky Neon",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/71f42ec23a7f80c365f0c3900a6e61bdc78733d7.png",
+    "name": "White Glitch",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/734142224dc61c3a9a38a44ed25fa94dc0ee676c.png",
+    "name": "Zoom",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/77a5bfca9dcc44e2e3aaaabea62249407f9f4ec0.png",
+    "name": "Slow Fire",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/7e41e2a48ea057e0f6267ff736815cd1354e04d3.png",
+    "name": "Nostalgic",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/7e753023f517ba01d4fd5d4031d69addb68751f5.png",
+    "name": "Plasma Cartoon",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/8170b64741075f0f29a48c51113e0988c3aee38d.png",
+    "name": "Tension",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/828f62af546f278d5f15f8567c55f2c55e88b100.png",
+    "name": "Stripes",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/8549627888999226558043fb10bdeb81dd670d27.png",
+    "name": "Fogish",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/8afd807deaf29be85e1dac19c98e202c96e5965b.png",
+    "name": "Retroglitch",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/8b844b61b953d353deff005013883789c83e232d.png",
+    "name": "Blue Retroglitch",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/8bb5365f6663a7eafafe4e10dc152ce5916158da.png",
+    "name": "Pinkflame",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/8cd6048616bca2ff572d0560bab910c2c5647d87.png",
+    "name": "Kapow",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/910c5ba69177084e631257ecc1d7b4f4f9fa574f.png",
+    "name": "Blue Runner",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/92031faf3e9a462670b092b930e3596c5464956a.png",
+    "name": "Neon Glither",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/9530a7325c5c731c28a2cf2f1b8c406e0ce70aca.png",
+    "name": "Tron",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/95c4f373a5693dd1c83c461f6322ae58422bf92c.png",
+    "name": "Radar",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/984f18d4bcc76669bcbd8971f962d1b75716dd11.png",
+    "name": "in Flames",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/9e6690c5e80a9fe0ffe79dfefb1f07affaf8d8f4.png",
+    "name": "Dragon Frame",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/9f784931f2a1dae459358caeb428144b449e6692.png",
+    "name": "Weapons",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/a197c02d6901b5912e6c965eddc8b10dedfce5df.png",
+    "name": "Swallowed",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/a1e51c6fcff5b4363ebca3e33b790d6d5cba204b.png",
+    "name": "in Flames 2",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/a2810c6a2e5f53c3faf79c2bbd11e2bda6cf1846.png",
+    "name": "Cyan Flame",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/a2af18d987a14aba583c3b06deebd7ca8349c540.png",
+    "name": "Slimer",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/a84d7029706cba9f6cac8b36487598063394af27.png",
+    "name": "Water",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/aad061deaa3049cef5606287b64b5b84398febbe.png",
+    "name": "Targeting",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/aframe1.png",
+    "name": "Antimatter Frame",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/b19d5808c5d1731453df89e0ea0389d0a8ec5bd7.png",
+    "name": "Polaroid",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/b30da7878e6add2e297d15468146d5ce244b6c91.png",
+    "name": "Red Shadow",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/b41cfbbf151bb62e2a89a4c8b1243058c7744c7f.png",
+    "name": "Night",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/b6080a0f52bfc036e7de284754c2ea8781323d7b.png",
+    "name": "Glassframe",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/b856fb5a1f741909e43f7fbfad05bb6f389d0ce3.png",
+    "name": "Shadowframes",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/b90016dabc36340c1f0d86a450d07713a9328a98.png",
+    "name": "Frostburn",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/b9c02dcdac95603a33c8bc39212098aef6adc3f6.png",
+    "name": "Magic",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/bae9860e1028d9be47e5e558d3f8a817c5d55b35.png",
+    "name": "Inburn",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/bc4f80589ce04f36bdeba0eb0a1324b4f505850a.png",
+    "name": "German",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/bd6f1c56a88b41fc8a18ac8b4dde840f4e51a9cc.png",
+    "name": "Forest Lush",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/beaee5e90d93bfafa5f5f55acb23abfd28ad180c.png",
+    "name": "Intense Flame",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/bf774b4d0d5c992154cc9ea922e061d18cb29558.png",
+    "name": "Shiny Windows",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/c6a479fae8979bc9c1a02378e488e3ce06b52cb1.png",
+    "name": "Blue Glimmering",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/c7717f6c606a9528fd5fffc4bb22ed9e1094385f.png",
+    "name": "Pixelfall",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/c827a7aac15d6a3dcaeb462fb81904d141616254.png",
+    "name": "Purple Dream",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/ca7850dad0b1b299a8d965e24354d74e82012348.png",
+    "name": "Frostframe",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/cca6167155dbaef1e10dab7e5af123875b995078.png",
+    "name": "Fogframe",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/d53ca26380b75490cece13536cedab5cf4fd59fa.png",
+    "name": "Red Rotator",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/dd85d771c87de0ade5c3f31fe80b789af32a6ddd.png",
+    "name": "Ink",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/de4531046c69411b0cdb2c0482d27280b74a4a2a.png",
+    "name": "Wings",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/e1fb4d628839cb7dfd0eafe5e5125a7f73996db7.png",
+    "name": "Swords",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/e5a628f71e10417ba3c32def4d5fc7a6bcaab421.png",
+    "name": "GOW",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/e622b6d5223655a2b967036f107e37c294edf1af.png",
+    "name": "Japanese",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/e9bececd762886243466afa40b6571ebba8b9f46.png",
+    "name": "Eletrocution",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/eae97432526b1f3d24194ae8c9b73d471a1a26de.png",
+    "name": "Darkness",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/ebe6b674deca163b28423e3b925bd36b0f0f357b.png",
+    "name": "Slowglow",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/ec33956c92fc0c71ed29e1ae7e09630a604ce6d0.png",
+    "name": "Hologram",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/f2dc9e446a624ee2407682b875d407834aa7b390.png",
+    "name": "Flameness",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/f57bd55497bf2f056637e65cfd4debdc21fe090c.png",
+    "name": "Illusion",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/fad2f40f39871dcdeb979fb68febe85825f897db.png",
+    "name": "Digi Runes",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/fde4583a31c6bd112b47ef192b187111cb10d255.png",
+    "name": "Gold Glitterdust",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/ff0e949ff66f2208a005ed51244ad145f0b68904.png",
+    "name": "Neon layer",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/ffcd7cb08f88f2435f20657b019be15fe5a6613b.png",
+    "name": "Blood Drips",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/2bf93aac625023d2dbe474efa55c24ba2ad963ce.png",
+    "name": "2bf93aac62502...",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "reticle",
+    "file_path": "anim-avatar/f3b36afd42fc5bb754d5b03f6a96d5f3a0a45da2.png",
+    "name": "f3b36afd42fc5...",
+    "description": "",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{}"
+  },
+  {
+    "type": "title",
+    "file_path": "",
+    "name": "Champion",
+    "description": "Golden champion title",
+    "price": 600,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"color\":\"#f0c040\"}"
+  },
+  {
+    "type": "title",
+    "file_path": "",
+    "name": "Rookie",
+    "description": "Fresh green rookie",
+    "price": 100,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"color\":\"#4caf50\"}"
+  },
+  {
+    "type": "title",
+    "file_path": "",
+    "name": "Veteran",
+    "description": "Seasoned blue veteran",
+    "price": 300,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"color\":\"#90caf9\"}"
+  },
+  {
+    "type": "title",
+    "file_path": "",
+    "name": "Legend",
+    "description": "Purple legendary title",
+    "price": 1000,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"color\":\"#ce93d8\"}"
+  },
+  {
+    "type": "title",
+    "file_path": "",
+    "name": "Bluffer",
+    "description": "Orange trickster title",
+    "price": 400,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"color\":\"#ff9800\"}"
+  },
+  {
+    "type": "title",
+    "file_path": "",
+    "name": "Card Shark",
+    "description": "Teal shark title",
+    "price": 500,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"color\":\"#26c6da\"}"
+  },
+  {
+    "type": "title",
+    "file_path": "",
+    "name": "Wildcard",
+    "description": "Red wildcard title",
+    "price": 450,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"color\":\"#ef5350\"}"
+  },
+  {
+    "type": "title",
+    "file_path": "",
+    "name": "Master",
+    "description": "Amber master title",
+    "price": 800,
+    "active": 1,
+    "sort_order": 0,
+    "meta": "{\"color\":\"#ffd54f\"}"
+  }
+]

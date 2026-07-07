@@ -8,6 +8,10 @@ let UnitTest = require('./node_src/UnitTest.js');
 let userDB = require('./node_src/UserDB.js');
 const ForumDB = require('./node_src/ForumDB.js');
 const AchievementsService = require('./node_src/AchievementsService.js');
+const FederationDB = require('./node_src/FederationDB.js');
+const FederationIdentity = require('./node_src/FederationIdentity.js');
+const FederationService = require('./node_src/FederationService.js');
+const { computeServerHash } = require('./node_src/FederationHash.js');
 let fs = require('fs');
 let path = require('path');
 let multer = require('multer');
@@ -17,7 +21,8 @@ const rateLimit = require('express-rate-limit');
 const svgCaptcha = require('svg-captcha');
 
 let config = {};
-try { config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8')); } catch(e) {}
+const configPath = process.env.UNO_CONFIG_PATH || path.join(__dirname, 'config.json');
+try { config = JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch(e) {}
 
 const inviteTokens = new Map();
 setInterval(() => { const now = Date.now(); inviteTokens.forEach((v, k) => { if (v.expires < now) inviteTokens.delete(k); }); }, 300000);
@@ -25,7 +30,7 @@ setInterval(() => { const now = Date.now(); inviteTokens.forEach((v, k) => { if 
 const AVATAR_DIR = path.join(__dirname, 'data', 'avatars');
 fs.mkdirSync(AVATAR_DIR, { recursive: true });
 
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.UNO_DATA_DIR || path.join(__dirname, 'data');
 const forumDB = new ForumDB(userDB.db, DATA_DIR);
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
@@ -105,6 +110,19 @@ const achievSvc = new AchievementsService(userDB, io);
 const FriendsService = require('./node_src/FriendsService.js');
 const friendsSvc = new FriendsService(userDB, io);
 require('./node_src/forumRoutes')(application, userDB, forumDB, adminAuth);
+const federationDB = new FederationDB(userDB.db);
+const federationIdentity = new FederationIdentity(DATA_DIR);
+const cachedServerHash = computeServerHash(__dirname);
+const federationService = new FederationService({
+    db: federationDB,
+    identity: federationIdentity,
+    getServerHash: () => cachedServerHash,
+    ourDomain: config.federationDomain || ('localhost:' + PORT),
+    pollMs: config.federationPollMs || 60000,
+    scheme: config.federationScheme || 'https'
+});
+require('./node_src/FederationRoutes.js')(application, federationDB, federationService, federationIdentity, adminAuth, config);
+federationService.start();
 achievSvc.ensureFreshChallenges();
 let gameServiceRepository = new GameServiceRepository();
 let gameServiceFactory = new GameServiceFactory();
@@ -826,7 +844,6 @@ const RATE_LIMITS = {
     chatOpen:      { windowMs: 5000,  max: 3  },
     create:        { windowMs: 10000, max: 5  },
     login:         { windowMs: 10000, max: 5  },
-    changeRule:    { windowMs: 2000,  max: 3  },
     restart:       { windowMs: 10000, max: 3  },
     globalChat:    { windowMs: 1500,  max: 1  },
 };
@@ -1117,22 +1134,6 @@ io.sockets.on('connection', function(socket) {
                         gs._afkStateKey = null;
                         gs.restart();
                         broadcastGameState(gs);
-                    }
-                    return;
-                }
-
-                if(action === 'changeRule'){
-                    let gs = socket.currentGameService;
-                    if(gs && data && typeof data === 'object'){
-                        let rs = data.ruleset;
-                        let grmChange = gs.getGameRulesModel();
-                        // Nextgen mode requires stacking to stay balanced -- can't be
-                        // switched back to instant punishment mid-game either.
-                        if(grmChange.nextgenMode && rs !== 'stacking') return;
-                        if(rs === 'original' || rs === 'stacking'){
-                            grmChange.ruleset = rs;
-                            io.to(gs.getId()).emit('rulesetChanged', { ruleset: rs });
-                        }
                     }
                     return;
                 }
