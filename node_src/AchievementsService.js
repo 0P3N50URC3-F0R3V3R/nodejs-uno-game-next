@@ -137,8 +137,15 @@ class AchievementsService {
             }
             const current = this.db.getChallenges(type);
             if (!current || !current.date_key.startsWith(expected)) { this.generateChallenges(type); return; }
-            // For weekly only: also regenerate if expires_at is suspiciously soon (wrong entry from old session)
-            if (type === 'weekly' && current.expires_at <= Date.now() + 23 * 3600000) this.generateChallenges(type);
+            // For weekly only: also regenerate if expires_at has already passed (a genuinely
+            // stale/wrong entry from an old session). This must NOT catch a still-current
+            // week's challenges merely because they're approaching their real, correct
+            // expiry — that's normal for ~23h out of every 168h-long week, and every
+            // round_end calls ensureFreshChallenges(), so a "soon" threshold here would
+            // re-broadcast a zeroed-progress challengesReset to everyone on nearly every
+            // match played during that window, wiping the visible (though not the DB-stored)
+            // per-user progress for no reason.
+            if (type === 'weekly' && current.expires_at <= Date.now()) this.generateChallenges(type);
         });
     }
 
@@ -175,17 +182,32 @@ class AchievementsService {
     }
 
     checkDailies(userId, socketId, eventType, ctx) {
+        // TEMP DIAGNOSTIC (remove once press_uno bug is found):
+        if (eventType === 'uno_called') {
+            console.log('[UnoDiag] checkDailies called, userId=' + userId + ' socketId=' + socketId + ' ctx=' + JSON.stringify(ctx));
+        }
         ['daily','weekly'].forEach(type => {
             const current = this.db.getChallenges(type);
-            if (!current) return;
+            if (!current) {
+                if (eventType === 'uno_called') console.log('[UnoDiag] type=' + type + ' NO current challenge row at all');
+                return;
+            }
             const challenges = JSON.parse(current.challenges_json);
             const done = new Set(
                 this.db.getUserChallengeProgress(userId, type, current.date_key)
                     .filter(r => r.completed).map(r => r.challenge_idx)
             );
+            if (eventType === 'uno_called') {
+                console.log('[UnoDiag] type=' + type + ' date_key=' + current.date_key + ' challenges=' +
+                    JSON.stringify(challenges.map((c, i) => ({ idx: i, type: c.type, x: c.x }))) +
+                    ' done=' + JSON.stringify(Array.from(done)));
+            }
             challenges.forEach((ch, idx) => {
                 if (done.has(idx)) return;
                 const delta = this._challengeDelta(ch, eventType, ctx);
+                if (eventType === 'uno_called' && ch.type === 'press_uno') {
+                    console.log('[UnoDiag] evaluating press_uno idx=' + idx + ' delta=' + delta);
+                }
                 if (delta <= 0) return;
                 const newProg = this.db.incrementChallengeProgress(userId, type, current.date_key, idx, delta);
                 const completed = newProg >= ch.x;

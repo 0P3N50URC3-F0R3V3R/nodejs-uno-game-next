@@ -1,5 +1,5 @@
 <template>
-    <div class="login-box" :class="{'login-box-wide': authed && view === 'create'}" v-if="!client.code">
+    <div class="login-box" :class="{'login-box-wide': authed && (view === 'create' || view === 'join')}" v-if="!client.code">
 
         <!-- AUTH VIEWS -->
         <template v-if="!authed">
@@ -269,8 +269,11 @@
                 </div>
                 <div class="error-msg" v-if="roomError">{{ t('channel_required') }}</div>
                 <ul class="lobby-list" v-if="lobbies.length > 0">
-                    <li v-for="lobby in lobbies" :key="lobby.id" class="lobby-item" @click="selectLobby(lobby.id)">
-                        {{ lobby.id }} [{{ lobby.players }}/5]<span v-if="lobby.locked" class="lobby-lock">PW</span>
+                    <li v-for="lobby in lobbies" :key="(lobby.domain || '') + lobby.id" class="lobby-item"
+                        :class="{ 'lobby-item-remote': isRemoteLobby(lobby) }"
+                        @click="selectLobby(lobby)">
+                        <span v-if="lobby.domain" class="lobby-server-tag">[{{ lobby.domain }}]</span>
+                        {{ lobby.id }} [{{ lobby.players }}/{{ lobby.max }}]<span v-if="lobby.locked" class="lobby-lock">PW</span>
                     </li>
                 </ul>
                 <div class="no-lobbies" v-else>{{ t('no_lobbies') }}</div>
@@ -349,6 +352,9 @@
                 room: null,
                 lobbies: [],
                 lobbiesLoading: false,
+                ownFederationDomain: null,
+                federatedGuestHomeDomain: null,
+                federatedGuestSessionId: null,
                 _lobbyTimer: null,
                 password: '',
                 roomExistsWarning: false,
@@ -630,9 +636,30 @@
                 });
                 this.socket.emit('login', {'client': this.client, authToken: localStorage.getItem('unoAuthToken')});
             },
-            selectLobby: function(id) {
-                this.room = id;
+            isRemoteLobby: function(lobby) {
+                return !!lobby.domain && lobby.domain !== this.ownFederationDomain;
+            },
+            selectLobby: function(lobby) {
+                this.room = lobby.id;
                 this.wrongPasswordError = false;
+                if (this.isRemoteLobby(lobby)) {
+                    this.joinRemoteLobby(lobby);
+                }
+            },
+            joinRemoteLobby: function(lobby) {
+                let token = localStorage.getItem('unoAuthToken');
+                if (!token) { this.roomFullError = 'Log in first to join a federated room.'; return; }
+                fetch('/api/federation/join-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ peerDomain: lobby.domain, roomId: lobby.id })
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.redirectUrl) { window.location.href = data.redirectUrl; }
+                        else { this.roomFullError = data.error || 'Could not join that room.'; }
+                    })
+                    .catch(() => { this.roomFullError = 'Could not join that room.'; });
             },
             joinInstead: function() {
                 this.roomExistsWarning = false;
@@ -649,7 +676,11 @@
                 let self = this;
                 fetch('/api/lobbies')
                     .then(function(r){ return r.json(); })
-                    .then(function(data){ self.lobbies = data; self.lobbiesLoading = false; })
+                    .then(function(data){
+                        self.lobbies = data.lobbies;
+                        self.ownFederationDomain = data.ownDomain;
+                        self.lobbiesLoading = false;
+                    })
                     .catch(function(){ self.lobbies = []; self.lobbiesLoading = false; });
             },
             _startLobbyTimer: function() {
@@ -668,6 +699,31 @@
         },
         beforeDestroy: function() { this._stopLobbyTimer(); },
         mounted: function() {
+            let params = new URLSearchParams(window.location.search);
+            let fedSession = params.get('fedSession');
+            let fedError = params.get('fedError');
+            if (fedError) {
+                this.roomFullError = 'Federated join failed: ' + fedError;
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+            if (fedSession) {
+                let self2 = this;
+                fetch('/api/federation/guest-session/' + fedSession)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(function(session) {
+                        if (!session) return;
+                        self2.authed = true;
+                        self2.client.name = session.name;
+                        self2.room = session.room;
+                        self2.password = null;
+                        self2.federatedGuestHomeDomain = session.homeDomain;
+                        self2.federatedGuestSessionId = fedSession;
+                        self2.$emit('federated-guest', { homeDomain: session.homeDomain, sessionId: fedSession });
+                        self2.$nextTick(function() { self2.loginJoin(); });
+                    });
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+
             let savedToken = localStorage.getItem('unoAuthToken');
             let savedUser = localStorage.getItem('unoAuthUser');
             if(savedToken && savedUser) {
@@ -980,6 +1036,8 @@
         font-style: italic;
         margin-top: 6px;
     }
+    .lobby-server-tag { color: #9a6515; font-weight: bold; margin-right: 4px; }
+    .lobby-item-remote { border-left: 3px solid #9a6515; padding-left: 6px; }
 
     /* ── PLAYERS ── */
     .player-row {

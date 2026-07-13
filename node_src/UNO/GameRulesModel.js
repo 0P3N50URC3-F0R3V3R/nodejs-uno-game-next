@@ -369,14 +369,23 @@ module.exports = class GameRulesModel{
                     this.stackPending.max = this.stackCap;
                     // Win check: player emptied hand with a penalty card
                     if(unoClient.getCardsCount() === 0){
+                        // The stack doesn't die with the play that finished it — whoever's
+                        // next still owes the accumulated draw, exactly as if they'd been
+                        // forced to take() it themselves. The player who just went out is
+                        // done either way; this only affects the next player in line.
+                        let owedCount = this.stackPending.count;
+                        this.stackPending = null;
+                        for(let s = 0; s < owedCount; s++){
+                            if(this.drawDeck.length === 0) this.reShuffleDeck();
+                            this.takeCard(unoClientNext);
+                        }
                         // Once a hoarder-loss has happened this round, the rest plays out
                         // ranked (Battle-Royale style) rather than ending on the first
                         // classic win — matches how a real Battle Royale game never lets
                         // hand-emptying end the round early either.
                         if(this.battleRoyale || (this.nextgenMode && this.brEliminated.length > 0)){
-                            this.stackPending = null; this._brEliminatePlayer(unoClient, 'br'); return;
+                            this._brEliminatePlayer(unoClient, 'br'); return;
                         }
-                        this.stackPending = null;
                         UNOClient.setArrayTurn(this.clientRepository.findAll(), false);
                         UNOClient.setArrayHasWon(this.clientRepository.findAll(), false);
                         UNOClient.setArrayReady(this.clientRepository.findAll(), false);

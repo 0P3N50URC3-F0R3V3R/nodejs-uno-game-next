@@ -123,6 +123,7 @@
                 self.progress    = d.progress || {};
                 self.daily       = d.daily  || { challenges: [] };
                 self.weekly      = d.weekly || { challenges: [] };
+                self._refreshingChallenges = false;
             };
             this._achUnlockedHandler = function(d) {
                 if (!self.unlockedIds.includes(d.id)) self.unlockedIds.push(d.id);
@@ -172,6 +173,17 @@
             updateCountdowns: function() {
                 this.dailyCountdown  = this._fmt(this.daily.expiresAt);
                 this.weeklyCountdown = this._fmt(this.weekly.expiresAt);
+                // Challenges are date-keyed server-side and roll over silently. If the
+                // app stays open across that boundary, the panel would otherwise sit
+                // frozen on a challenge set the server has already replaced -- further
+                // progress gets evaluated against the new set and never lands on the
+                // stale one still on screen. Re-sync once we're past either deadline.
+                var pastDaily = this.daily.expiresAt && Date.now() >= this.daily.expiresAt;
+                var pastWeekly = this.weekly.expiresAt && Date.now() >= this.weekly.expiresAt;
+                if ((pastDaily || pastWeekly) && !this._refreshingChallenges && this.socket) {
+                    this._refreshingChallenges = true;
+                    this.socket.emit('requestAchievementsState', { authToken: localStorage.getItem('unoAuthToken') });
+                }
             },
             _fmt: function(ms) {
                 if (!ms) return '';

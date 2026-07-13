@@ -1,7 +1,7 @@
 'use strict';
 const rateLimit = require('express-rate-limit');
 
-module.exports = function(application, federationDB, federationService, federationIdentity, adminAuth, config) {
+module.exports = function(application, federationDB, federationService, federationIdentity, adminAuth, config, userDB, gameServiceRepository) {
     const fedLimiter = rateLimit({ windowMs: 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false });
 
     application.post('/api/federation/handshake', fedLimiter, function(req, res) {
@@ -20,6 +20,74 @@ module.exports = function(application, federationDB, federationService, federati
     application.post('/api/federation/unlink', fedLimiter, function(req, res) {
         federationService.handleUnlinkRequest(req.body || {});
         res.json({ ok: true });
+    });
+
+    application.get('/api/federation/lobbies', fedLimiter, function(req, res) {
+        res.json(federationService.getLocalLobbies());
+    });
+
+    application.post('/api/federation/name-check', fedLimiter, function(req, res) {
+        res.json(federationService.handleNameCheckRequest(req.body || {}));
+    });
+
+    application.post('/api/federation/win-event', fedLimiter, function(req, res) {
+        const accepted = federationService.handleWinEventReport(req.body || {});
+        res.json({ ok: accepted });
+    });
+
+    application.post('/api/federation/join-request', fedLimiter, function(req, res) {
+        const token = req.headers['authorization'] ? req.headers['authorization'].replace('Bearer ', '') : null;
+        if (!token) { res.status(401).json({ error: 'No token' }); return; }
+        const user = userDB.getUserByToken(token);
+        if (!user) { res.status(401).json({ error: 'Invalid token' }); return; }
+
+        const peerDomain = (req.body && req.body.peerDomain) || '';
+        const roomId = (req.body && req.body.roomId) || '';
+        const peer = federationDB.getPeerByDomain(peerDomain);
+        if (!peer || peer.status !== 'Connected') { res.status(400).json({ error: 'Peer not connected' }); return; }
+        if (!roomId) { res.status(400).json({ error: 'roomId required' }); return; }
+
+        const joinToken = federationService.issueJoinToken(roomId, user.username);
+        const redirectUrl = `${config.federationScheme || 'https'}://${peerDomain}/federated-join?token=${encodeURIComponent(joinToken)}`;
+        res.json({ redirectUrl });
+    });
+
+    application.get('/federated-join', fedLimiter, function(req, res) {
+        const token = req.query.token || '';
+        let tokenPayload;
+        try {
+            tokenPayload = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+        } catch (e) {
+            res.redirect('/?fedError=bad_token');
+            return;
+        }
+        const senderDomain = tokenPayload && tokenPayload.payload && tokenPayload.payload.domain;
+        const result = federationService.verifyJoinToken(senderDomain, token);
+        if (!result.ok) { res.redirect('/?fedError=' + result.reason); return; }
+
+        const gameService = gameServiceRepository.findById(result.roomId);
+        if (!gameService || gameService.password || gameService.getGameRulesModel().isSeriesStarted()) {
+            res.redirect('/?fedError=room_unavailable');
+            return;
+        }
+        if (gameService.getClientRepository().count() >= 5) {
+            res.redirect('/?fedError=room_full');
+            return;
+        }
+
+        const localNames = gameService.getClientRepository().findAll().map(c => c.getName());
+        const dedupedName = require('./FederationService.js').dedupeGuestName(result.playerName, localNames);
+
+        const sessionId = federationService.createGuestSession({
+            room: result.roomId, name: dedupedName, homePlayerName: result.playerName, homeDomain: senderDomain
+        });
+        res.redirect('/?fedSession=' + sessionId);
+    });
+
+    application.get('/api/federation/guest-session/:id', function(req, res) {
+        const session = federationService.peekGuestSession(req.params.id);
+        if (!session) { res.status(404).json({ error: 'not found or expired' }); return; }
+        res.json(session);
     });
 
     application.get('/api/admin/federation/peers', adminAuth, function(req, res) {

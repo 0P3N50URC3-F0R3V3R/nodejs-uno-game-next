@@ -2,6 +2,18 @@
 const crypto = require('crypto');
 const FederationIdentity = require('./FederationIdentity.js');
 
+function dedupeGuestName(name, takenNames) {
+    const taken = new Set(takenNames);
+    if (!taken.has(name)) return name;
+    for (let i = 2; i <= 20; i++) {
+        const candidate = name + i;
+        if (!taken.has(candidate)) return candidate;
+    }
+    throw new Error('Could not find a free name after 20 attempts');
+}
+
+const TOKEN_FRESHNESS_MS = 30000;
+
 class FederationService {
     constructor(opts) {
         this.db = opts.db;
@@ -11,8 +23,13 @@ class FederationService {
         this.fetchImpl = opts.fetchImpl || fetch;
         this.pollMs = opts.pollMs || 60000;
         this.scheme = opts.scheme || 'https';
+        this.getLocalLobbies = opts.getLocalLobbies || (() => []);
+        this.userDB = opts.userDB || null;
         this._pollTimer = null;
         this._backoff = new Map();
+        this._usedJoinNonces = new Map(); // nonce -> expiryTs, purged lazily
+        this._usedWinEventSignatures = new Map(); // signature -> expiryTs, purged lazily
+        this._guestSessions = new Map(); // id -> { payload, expiry }
     }
 
     // ---- inbound (synchronous, no network) ----
@@ -75,6 +92,40 @@ class FederationService {
         if (valid) this.db.deletePeer(peer.id);
     }
 
+    handleNameCheckRequest(reqBody) {
+        const name = (reqBody && reqBody.name) || '';
+        if (!name || !this.userDB) return { taken: false };
+        return { taken: this.userDB.usernameExists(name) };
+    }
+
+    handleWinEventReport(reqBody) {
+        const { senderDomain, playerName, roomId, ts, signature } = reqBody || {};
+        if (!this.userDB) return false;
+        const peer = this.db.getPeerByDomain(senderDomain);
+        if (!peer || peer.status !== 'Connected' || !peer.public_key) return false;
+        const valid = FederationIdentity.verify(peer.public_key, senderDomain + playerName + roomId + ts, signature);
+        if (!valid) return false;
+
+        this._purgeExpiredWinEventSignatures();
+        if (Date.now() - ts > TOKEN_FRESHNESS_MS) return false;
+        if (this._usedWinEventSignatures.has(signature)) return false;
+
+        const user = this.userDB.getUserByUsername ? this.userDB.getUserByUsername(playerName) : null;
+        if (!user) return false;
+
+        const goldAmount = this.userDB.goldGetEffective('gold_win');
+        this.userDB.awardGold(user.id, goldAmount);
+        this._usedWinEventSignatures.set(signature, ts + TOKEN_FRESHNESS_MS);
+        return true;
+    }
+
+    _purgeExpiredWinEventSignatures() {
+        const now = Date.now();
+        for (const [signature, expiry] of this._usedWinEventSignatures) {
+            if (expiry < now) this._usedWinEventSignatures.delete(signature);
+        }
+    }
+
     // ---- outbound (async, uses fetchImpl) ----
 
     start() {
@@ -117,7 +168,13 @@ class FederationService {
             } else {
                 await this._attemptHandshake(peer);
             }
-            await this._flushMessages(this.db.getPeerById(peer.id));
+            const refreshed = this.db.getPeerById(peer.id);
+            if (refreshed.status === 'Connected') {
+                await this._fetchLobbies(refreshed);
+            } else {
+                this.db.deleteLobbiesForPeer(peer.id);
+            }
+            await this._flushMessages(refreshed);
         }
     }
 
@@ -199,6 +256,123 @@ class FederationService {
         }
     }
 
+    async _fetchLobbies(peer) {
+        try {
+            const res = await this.fetchImpl(`${this.scheme}://${peer.domain}/api/federation/lobbies`, {
+                method: 'GET'
+            });
+            const data = await res.json();
+            this.db.replaceLobbiesForPeer(peer.id, Array.isArray(data) ? data : []);
+        } catch (e) {
+            this.db.deleteLobbiesForPeer(peer.id);
+        }
+    }
+
+    async checkNameAvailable(name) {
+        const peers = this.db.listPeers().filter(p => p.status === 'Connected');
+        const checks = peers.map(async (peer) => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 2000);
+            try {
+                const res = await this.fetchImpl(`${this.scheme}://${peer.domain}/api/federation/name-check`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }), signal: controller.signal
+                });
+                const data = await res.json();
+                return !data.taken;
+            } catch (e) {
+                return true; // fail open — unreachable or timed-out peer never blocks a name
+            } finally {
+                clearTimeout(timer);
+            }
+        });
+        const results = await Promise.all(checks);
+        return results.every(Boolean);
+    }
+
+    issueJoinToken(roomId, playerName) {
+        const payload = {
+            domain: this.ourDomain,
+            playerName,
+            roomId,
+            ts: Date.now(),
+            nonce: crypto.randomBytes(12).toString('hex')
+        };
+        const signature = this.identity.sign(JSON.stringify(payload));
+        return Buffer.from(JSON.stringify({ payload, signature })).toString('base64');
+    }
+
+    verifyJoinToken(peerDomain, token) {
+        let parsed;
+        try {
+            parsed = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+        } catch (e) {
+            return { ok: false, reason: 'bad_signature' };
+        }
+        const { payload, signature } = parsed || {};
+        if (!payload || payload.domain !== peerDomain) return { ok: false, reason: 'unknown_peer' };
+
+        const peer = this.db.getPeerByDomain(peerDomain);
+        if (!peer || peer.status !== 'Connected') return { ok: false, reason: 'unknown_peer' };
+
+        const valid = FederationIdentity.verify(peer.public_key, JSON.stringify(payload), signature);
+        if (!valid) return { ok: false, reason: 'bad_signature' };
+
+        this._purgeExpiredNonces();
+        if (Date.now() - payload.ts > TOKEN_FRESHNESS_MS) return { ok: false, reason: 'expired' };
+        if (this._usedJoinNonces.has(payload.nonce)) return { ok: false, reason: 'replayed' };
+        this._usedJoinNonces.set(payload.nonce, payload.ts + TOKEN_FRESHNESS_MS);
+
+        return { ok: true, playerName: payload.playerName, roomId: payload.roomId };
+    }
+
+    _purgeExpiredNonces() {
+        const now = Date.now();
+        for (const [nonce, expiry] of this._usedJoinNonces) {
+            if (expiry < now) this._usedJoinNonces.delete(nonce);
+        }
+    }
+
+    async reportWinEvent(homeDomain, payload) {
+        const ts = Date.now();
+        try {
+            const signature = this.identity.sign(this.ourDomain + payload.playerName + payload.roomId + ts);
+            await this.fetchImpl(`${this.scheme}://${homeDomain}/api/federation/win-event`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    senderDomain: this.ourDomain, playerName: payload.playerName, roomId: payload.roomId, ts, signature
+                })
+            });
+        } catch (e) { /* best-effort — a guest's home server being unreachable must not break the visited game */ }
+    }
+
+    createGuestSession(payload) {
+        this._purgeExpiredGuestSessions();
+        const id = crypto.randomBytes(16).toString('hex');
+        this._guestSessions.set(id, { payload, expiry: Date.now() + 60000 });
+        return id;
+    }
+
+    consumeGuestSession(id) {
+        const entry = this._guestSessions.get(id);
+        this._guestSessions.delete(id);
+        if (!entry || entry.expiry < Date.now()) return null;
+        return entry.payload;
+    }
+
+    peekGuestSession(id) {
+        const entry = this._guestSessions.get(id);
+        if (!entry || entry.expiry < Date.now()) return null;
+        return { ...entry.payload };
+    }
+
+    _purgeExpiredGuestSessions() {
+        const now = Date.now();
+        for (const [id, entry] of this._guestSessions) {
+            if (entry.expiry < now) this._guestSessions.delete(id);
+        }
+    }
+
     async sendMessage(peerId, bodyText) {
         const peer = this.db.getPeerById(peerId);
         const msg = this.db.addMessage(peerId, 'outgoing', bodyText);
@@ -250,3 +424,4 @@ class FederationService {
 }
 
 module.exports = FederationService;
+module.exports.dedupeGuestName = dedupeGuestName;

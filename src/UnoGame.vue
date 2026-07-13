@@ -1,6 +1,6 @@
 <template>
     <div class="frame" :style="{width:config.boardWidth+'px', height:config.boardHeight+'px'}" @wheel="onHandWheel">
-        <Authorize :client="state.client" :socket="socket" @auth-success="onAuthSuccess" @open-profile="openProfile" @logout="doLogout"></Authorize>
+        <Authorize :client="state.client" :socket="socket" @auth-success="onAuthSuccess" @open-profile="openProfile" @logout="doLogout" @federated-guest="onFederatedGuest"></Authorize>
 
         <Board v-if="state.client.code" :bg="tableBg" :videoBg="videoBg">
             <Card v-for="card in state.game.cards"
@@ -21,6 +21,22 @@
                  board, never "between" some of its cards and others. Rendered here,
                  its z-index correctly compares against the cards' own (900+). -->
             <div v-if="stealFrameActive" class="steal-frame-backdrop"></div>
+            <!-- Same stacking-context reasoning as steal-frame-backdrop above: this used
+                 to live as a sibling of Board, which meant it always painted over the
+                 entire board (including a hover-peeked card's z-index:99999, since that
+                 z-index only ranks it among Board's own children, never against anything
+                 outside Board's stacking context) regardless of any z-index set on it. -->
+            <div v-if="state.game.stackPending && state.game.ready && !state.game.winner"
+                 class="stack-banner"
+                 :class="'stack-banner-' + state.game.stackPending.type">
+                <span class="sb-count">+{{ state.game.stackPending.count }}/{{ state.game.stackPending.max || 20 }}</span>
+                <span class="sb-info">
+                    <span class="sb-rule">{{ t('stack_active') }}</span>
+                    <span class="sb-hint" v-if="state.client.turn">
+                        {{ t('stack_hint', { n: stackHintAmount }) }}
+                    </span>
+                </span>
+            </div>
         </Board>
         <div v-if="config.playersInitialized && state.game.ready && !state.game.winner"
              class="deck-count-badge"
@@ -56,7 +72,7 @@
             <span v-for="f in goldFloats" :key="f.id" class="gold-float">+{{ f.amount }}G</span>
         </div>
         <NowPlaying></NowPlaying>
-        <ChatPanel v-if="isLoggedIn" :socket="socket" :playerName="state.client.name" :inGame="!!state.client.code" :myUserId="myUserId" ref="chatPanel"></ChatPanel>
+        <ChatPanel v-if="isLoggedIn || isFederatedGuest" :socket="socket" :playerName="state.client.name" :inGame="!!state.client.code" :myUserId="myUserId" ref="chatPanel"></ChatPanel>
         <StorePanel v-if="isLoggedIn" :authToken="authToken" :socket="socket" @bg-change="videoBg = $event" @bg-profile-change="profileVideoBg = $event" @gold-changed="onGoldChanged"></StorePanel>
         <NewsPanel :socket="socket" :authToken="authToken" @friends-updated="loadFriendList" @accept-invite="acceptGameInvite"></NewsPanel>
         <ProfilePanel
@@ -107,17 +123,6 @@
                 <div v-if="spinnerLanded" class="spinner-goes-first">{{ t('goes_first') }}</div>
             </div>
         </transition>
-        <div v-if="state.game.stackPending && state.game.ready && !state.game.winner"
-             class="stack-banner"
-             :class="'stack-banner-' + state.game.stackPending.type">
-            <span class="sb-count">+{{ state.game.stackPending.count }}/{{ state.game.stackPending.max || 20 }}</span>
-            <span class="sb-info">
-                <span class="sb-rule">{{ t('stack_active') }}</span>
-                <span class="sb-hint" v-if="state.client.turn">
-                    {{ t('stack_hint', { n: stackHintAmount }) }}
-                </span>
-            </span>
-        </div>
         <transition-group name="lnotif" tag="div" class="lobby-notifs" v-if="state.client.code">
             <div v-for="n in lobbyNotifs" :key="n.id" class="lnotif" :class="'lnotif-'+n.type">
                 <span class="lnotif-name">{{ n.name }}</span> {{ n.label || t('lobby_' + n.type) }}
@@ -276,6 +281,7 @@
                     },
                 },
                 isLoggedIn: !!localStorage.getItem('unoAuthToken'),
+                isFederatedGuest: false,
                 authToken: localStorage.getItem('unoAuthToken') || '',
                 myUserId: 0,
                 friendList: [],
@@ -554,6 +560,10 @@
                 this.isLoggedIn = true;
                 this.authToken = localStorage.getItem('unoAuthToken') || '';
                 if (this.authToken) this.loadUserSession(this.authToken);
+            },
+            onFederatedGuest: function(payload) {
+                this.isFederatedGuest = true;
+                this.socket.emit('federationGuestMark', { sessionId: payload.sessionId });
             },
             onShowTooltip: function(payload) {
                 this.tooltipClient = payload.client;
@@ -1130,6 +1140,13 @@
             },
             updateState:function(cards){
                 let dealIdx = 0;
+                // Rotate reassigns every active player's whole hand in one broadcast
+                // (dozens of cards can change owner at once) — the per-card deal
+                // stagger below is tuned for a handful of dealt cards and balloons
+                // linearly with table/hand size. Rotate's cards move together instead,
+                // which is why a small swap like Trade Hands (same code path, few
+                // cards) already looked fast: it was never staggered enough to notice.
+                let isRotate = this.state.game.lastEvent && this.state.game.lastEvent.type === 'rot';
                 for(let i=0; i<this.state.game.cards.length; i++){
                     if(typeof cards[i] === 'undefined')continue;
 
@@ -1142,7 +1159,17 @@
                     if(cards[i].owner !== this.state.game.cards[i].owner){
                         this.cardSetOwner(this.state.game.cards[i], cards[i].owner);
                         if(cards[i].owner !== OWNER_DISCARD_DECK && cards[i].owner !== OWNER_DRAW_DECK){
-                            this.state.game.cards[i].transform.delay = dealIdx * 0.05;
+                            if(isRotate){
+                                // Every card on the table moves at once here (vs. a single
+                                // card for Trade Hands) — on top of dropping the stagger,
+                                // shorten the per-card flight itself so the whole table's
+                                // redistribution reads as one quick beat, not a slow, busy
+                                // wash of dozens of cards each taking the normal 0.32s.
+                                this.state.game.cards[i].transform.d = 0.18;
+                                this.state.game.cards[i].transform.delay = 0;
+                            } else {
+                                this.state.game.cards[i].transform.delay = dealIdx * 0.05;
+                            }
                             this.state.game.cards[i]._pendingAnim = true;
                             this._animPending++;
                             dealIdx++;
@@ -1530,10 +1557,12 @@
                 // they're played (no separate confirm step) — hold input briefly so
                 // nobody acts before the hand-shuffle animation visually lands. Reuses
                 // the same lock cardOnClick already checks for discard-travel timing,
-                // just held longer. Rotate's label is fast (1.1s), Redraw's now runs at
-                // the default (slower) pace, so it gets a longer lock to match.
+                // just held longer. Rotate's cards now move unstaggered (see updateState)
+                // and land in ~0.32s, so its lock only needs a small buffer over that;
+                // Redraw's still runs at the default (staggered) pace, so it keeps its
+                // longer lock to match.
                 if(def.rotateAll){
-                    this._discardAnimLockUntil = Math.max(this._discardAnimLockUntil, Date.now() + 1300);
+                    this._discardAnimLockUntil = Math.max(this._discardAnimLockUntil, Date.now() + 450);
                 } else if(def.redrawAll){
                     this._discardAnimLockUntil = Math.max(this._discardAnimLockUntil, Date.now() + 2400);
                 }

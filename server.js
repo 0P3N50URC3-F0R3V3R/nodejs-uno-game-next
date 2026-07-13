@@ -113,22 +113,33 @@ require('./node_src/forumRoutes')(application, userDB, forumDB, adminAuth);
 const federationDB = new FederationDB(userDB.db);
 const federationIdentity = new FederationIdentity(DATA_DIR);
 const cachedServerHash = computeServerHash(__dirname);
+let gameServiceRepository = new GameServiceRepository();
+let gameServiceFactory = new GameServiceFactory();
 const federationService = new FederationService({
     db: federationDB,
     identity: federationIdentity,
     getServerHash: () => cachedServerHash,
+    userDB: userDB,
     ourDomain: config.federationDomain || ('localhost:' + PORT),
     pollMs: config.federationPollMs || 60000,
-    scheme: config.federationScheme || 'https'
+    scheme: config.federationScheme || 'https',
+    getLocalLobbies: () => gameServiceRepository.findAll()
+        .filter(gs => !gs.getGameRulesModel().isSeriesStarted() && !gs.password)
+        .map(gs => ({
+            room_id: gs.getId(), room_name: gs.getId(),
+            players: gs.getClientRepository().count(), max_players: 5
+        }))
 });
-require('./node_src/FederationRoutes.js')(application, federationDB, federationService, federationIdentity, adminAuth, config);
+require('./node_src/FederationRoutes.js')(application, federationDB, federationService, federationIdentity, adminAuth, config, userDB, gameServiceRepository);
 federationService.start();
 achievSvc.ensureFreshChallenges();
-let gameServiceRepository = new GameServiceRepository();
-let gameServiceFactory = new GameServiceFactory();
 
-application.post('/api/auth/register', registerLimiter, function(req, res){
+application.post('/api/auth/register', registerLimiter, async function(req, res){
     let b = req.body || {};
+    if (typeof b.username === 'string' && b.username.trim()) {
+        const available = await federationService.checkNameAvailable(b.username.trim());
+        if (!available) { res.status(400).json({ error: 'Username already taken' }); return; }
+    }
     let result = userDB.register(b.username, b.password, b.email);
     res.status(result.error ? 400 : 200).json(result);
 });
@@ -177,12 +188,16 @@ application.post('/api/profile/change-password', function(req, res){
     res.json(userDB.changePassword(user.id, b.oldPassword, b.newPassword));
 });
 
-application.post('/api/profile/change-username', function(req, res){
+application.post('/api/profile/change-username', async function(req, res){
     let token = req.headers['authorization'] ? req.headers['authorization'].replace('Bearer ', '') : null;
     if(!token){ res.status(401).json({error: 'No token'}); return; }
     let user = userDB.getUserByToken(token);
     if(!user){ res.status(401).json({error: 'Invalid token'}); return; }
     let b = req.body || {};
+    if (typeof b.username === 'string' && b.username.trim()) {
+        const available = await federationService.checkNameAvailable(b.username.trim());
+        if (!available) { res.status(400).json({ error: 'Username already taken' }); return; }
+    }
     const usernameResult = userDB.changeUsername(user.id, b.username);
     if (!usernameResult.error) achievSvc.trigger(user.id, null, 'name_changed', {});
     res.json(usernameResult);
@@ -527,14 +542,27 @@ application.delete('/api/profile/avatar', function(req, res){
 });
 
 application.get('/api/lobbies', function(req, res){
+    const anyPeersConfigured = federationDB.listPeers().length > 0;
     let lobbies = gameServiceRepository.findAll()
         .filter(gs => !gs.getGameRulesModel().isSeriesStarted())
         .map(gs => ({
             id: gs.getId(),
             players: gs.getClientRepository().count(),
-            locked: !!gs.password
+            max: 5,
+            locked: !!gs.password,
+            domain: anyPeersConfigured ? federationService.ourDomain : null
         }));
-    res.json(lobbies);
+    if (anyPeersConfigured) {
+        const remote = federationDB.listCachedLobbies().map(row => ({
+            id: row.room_id,
+            players: row.players,
+            max: row.max_players,
+            locked: false,
+            domain: row.domain
+        }));
+        lobbies = lobbies.concat(remote);
+    }
+    res.json({ ownDomain: anyPeersConfigured ? federationService.ourDomain : null, lobbies: lobbies });
 });
 
 function buildAvatarMap(gs){
@@ -823,6 +851,34 @@ function awardRoundXP(gs){
             }
         }
     });
+
+    let winnerForReport = cr.findByHasWon ? cr.findByHasWon(true) : winner;
+    Object.keys(io.sockets.sockets).forEach(function(sid){
+        let sock = io.sockets.sockets[sid];
+        if(sock.currentGameService !== gs || !sock.federatedGuest) return;
+        let client = cr.findBySocketId(sid);
+        if(!client || client.isAI) return;
+        let isGuestWinner = isBR ? client.brRank === 1 : !!(winnerForReport && client.getName() === winnerForReport.getName());
+        if(!isGuestWinner) return;
+
+        if (!io._goldCooldowns) io._goldCooldowns = new Map();
+        const guestCooldownKey = 'gold_guest_' + sock.federatedGuest.homeDomain + ':' + sock.federatedGuest.playerName;
+        const guestLastAward = io._goldCooldowns.get(guestCooldownKey) || 0;
+        const guestCooldownOk = (Date.now() - guestLastAward) >= 3 * 60 * 1000;
+        const guestMatchDuration = sock._matchStartTime
+            ? Math.floor((Date.now() - sock._matchStartTime) / 1000)
+            : 0;
+        const guestRoundsPlayed = gs.getGameRulesModel().getRoundsPlayed
+            ? gs.getGameRulesModel().getRoundsPlayed()
+            : 1;
+        if (!(guestMatchDuration >= 120 && guestRoundsPlayed >= 3 && guestCooldownOk)) return;
+
+        io._goldCooldowns.set(guestCooldownKey, Date.now());
+        federationService.reportWinEvent(sock.federatedGuest.homeDomain, {
+            playerName: sock.federatedGuest.playerName,
+            roomId: gs.getId()
+        });
+    });
 }
 
 function kickDuplicateSessions(newSocketId, userId) {
@@ -951,6 +1007,13 @@ io.sockets.on('connection', function(socket) {
             text: clean,
             sentAt
         });
+    });
+
+    socket.on('federationGuestMark', function(data) {
+        if (!data || typeof data.sessionId !== 'string') return;
+        const payload = federationService.consumeGuestSession(data.sessionId);
+        if (!payload) return;
+        socket.federatedGuest = { homeDomain: payload.homeDomain, playerName: String(payload.homePlayerName).substring(0, 32) };
     });
 
     socket.on('sendDM', function(data) {
@@ -1153,7 +1216,14 @@ io.sockets.on('connection', function(socket) {
                     let isNormal = !isNaN(parseInt(n));
                     let cardColor = data.card.type.length > 2 ? data.card.type.charAt(2) : data.card.type.charAt(0);
                     let grm2 = socket.currentGameService && socket.currentGameService.getGameRulesModel ? socket.currentGameService.getGameRulesModel() : null;
-                    let isStack = !!(grm2 && grm2.stackPending);
+                    // "isStack" means "this punishment card was played under the stacking
+                    // ruleset" (rewards engaging with the mechanic at all), not "a stack
+                    // happened to already be pending the instant before this exact card" —
+                    // that narrower reading meant stack_plus2/stack_plus4 almost never
+                    // fired in practice, since a +4 usually *starts* a chain rather than
+                    // landing mid-chain, and by the time a human's turn comes back around
+                    // an AI opponent has often already silently resolved the pending stack.
+                    let isStack = !!(grm2 && grm2.ruleset === 'stacking');
                     if (isWild && socket._roundFlags) socket._roundFlags.noColorChange = false;
                     if ((n === 'p' || n === 'g') && socket._roundFlags) socket._roundFlags.noPunishmentPlayed = false;
                     achievSvc.trigger(socket.userId, socket.id, 'card_placed', {

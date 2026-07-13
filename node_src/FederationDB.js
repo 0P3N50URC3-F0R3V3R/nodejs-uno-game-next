@@ -35,6 +35,15 @@ class FederationDB {
                 delivered INTEGER NOT NULL DEFAULT 0,
                 read_at INTEGER
             );
+            CREATE TABLE IF NOT EXISTS federation_lobbies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                peer_id INTEGER NOT NULL REFERENCES federation_peers(id),
+                room_id TEXT NOT NULL,
+                room_name TEXT NOT NULL,
+                players INTEGER NOT NULL,
+                max_players INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
         `);
     }
 
@@ -67,6 +76,7 @@ class FederationDB {
 
     deletePeer(id) {
         this.db.prepare('DELETE FROM federation_messages WHERE peer_id = ?').run(id);
+        this.db.prepare('DELETE FROM federation_lobbies WHERE peer_id = ?').run(id);
         this.db.prepare('DELETE FROM federation_peers WHERE id = ?').run(id);
     }
 
@@ -97,7 +107,33 @@ class FederationDB {
     }
 
     wipeAll() {
-        this.db.exec('DELETE FROM federation_messages; DELETE FROM federation_peers;');
+        this.db.exec('DELETE FROM federation_messages; DELETE FROM federation_lobbies; DELETE FROM federation_peers;');
+    }
+
+    replaceLobbiesForPeer(peerId, lobbies) {
+        const del = this.db.prepare('DELETE FROM federation_lobbies WHERE peer_id = ?');
+        const ins = this.db.prepare(
+            'INSERT INTO federation_lobbies (peer_id, room_id, room_name, players, max_players, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
+        );
+        const now = Date.now();
+        const tx = this.db.transaction((rows) => {
+            del.run(peerId);
+            rows.forEach(r => ins.run(peerId, r.room_id, r.room_name, r.players, r.max_players, now));
+        });
+        tx(lobbies || []);
+    }
+
+    listCachedLobbies() {
+        return this.db.prepare(`
+            SELECT fl.*, fp.domain as domain, 0 as locked
+            FROM federation_lobbies fl
+            JOIN federation_peers fp ON fp.id = fl.peer_id
+            ORDER BY fl.updated_at DESC
+        `).all();
+    }
+
+    deleteLobbiesForPeer(peerId) {
+        this.db.prepare('DELETE FROM federation_lobbies WHERE peer_id = ?').run(peerId);
     }
 }
 

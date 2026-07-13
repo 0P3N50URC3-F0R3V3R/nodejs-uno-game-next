@@ -45,9 +45,13 @@ function generateToken() {
 }
 
 class UserDB {
-    constructor() {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
-        this.db = new Database(DB_PATH);
+    constructor(db) {
+        if (db) {
+            this.db = db;
+        } else {
+            fs.mkdirSync(DATA_DIR, { recursive: true });
+            this.db = new Database(DB_PATH);
+        }
         this.sessionExpiryDays = 30;
         this._init();
     }
@@ -507,6 +511,14 @@ class UserDB {
         return { ok: true };
     }
 
+    usernameExists(username) {
+        return !!this.db.prepare('SELECT id FROM users WHERE username = ? COLLATE NOCASE').get(username);
+    }
+
+    getUserByUsername(username) {
+        return this.db.prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE').get(username);
+    }
+
     changeUsername(userId, newUsername) {
         if (!newUsername || newUsername.length < 2 || newUsername.length > 16) return { error: 'Username must be 2–16 characters' };
         if (!/^[a-zA-Z0-9_]+$/.test(newUsername)) return { error: 'Username: letters, numbers, underscore only' };
@@ -944,3 +956,4 @@ _instance.GOLD_DAILY_MAX = GOLD_DAILY_MAX;
 _instance.GOLD_WEEKLY_MIN = GOLD_WEEKLY_MIN;
 _instance.GOLD_WEEKLY_MAX = GOLD_WEEKLY_MAX;
 module.exports = _instance;
+module.exports.UserDB = UserDB;

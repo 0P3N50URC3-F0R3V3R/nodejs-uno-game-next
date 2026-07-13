@@ -200,6 +200,60 @@ async function testCheckLivenessNetworkFailureBecomesUnreachable() {
     db.close();
 }
 
+async function testFetchLobbiesCachesOnSuccess() {
+    const db = new Database(':memory:');
+    const fdb = new FederationDB(db);
+    const identity = tmpIdentity();
+    const peer = fdb.addPeer('b.example.com:2');
+    fdb.updatePeerStatus(peer.id, { status: 'Connected', public_key: 'pubkey-b' });
+    const svc = new FederationService({
+        db: fdb, identity, getServerHash: () => 'HASH_A', ourDomain: 'a.example.com:1',
+        getLocalLobbies: () => [],
+        fetchImpl: mockFetch([{ json: [{ room_id: 'r1', room_name: 'r1', players: 2, max_players: 5 }] }])
+    });
+    await svc._fetchLobbies(fdb.getPeerById(peer.id));
+    const cached = fdb.listCachedLobbies();
+    assert.strictEqual(cached.length, 1);
+    assert.strictEqual(cached[0].room_id, 'r1');
+    db.close();
+}
+
+async function testFetchLobbiesClearsCacheOnFailure() {
+    const db = new Database(':memory:');
+    const fdb = new FederationDB(db);
+    const identity = tmpIdentity();
+    const peer = fdb.addPeer('b.example.com:2');
+    fdb.updatePeerStatus(peer.id, { status: 'Connected', public_key: 'pubkey-b' });
+    fdb.replaceLobbiesForPeer(peer.id, [{ room_id: 'stale', room_name: 'stale', players: 1, max_players: 5 }]);
+    const svc = new FederationService({
+        db: fdb, identity, getServerHash: () => 'HASH_A', ourDomain: 'a.example.com:1',
+        getLocalLobbies: () => [],
+        fetchImpl: mockFetch([{ throwError: 'ECONNREFUSED' }])
+    });
+    await svc._fetchLobbies(fdb.getPeerById(peer.id));
+    assert.strictEqual(fdb.listCachedLobbies().length, 0, 'a failed fetch must clear stale cached rows, not leave them');
+    db.close();
+}
+
+async function testPollOnceAlsoFetchesLobbiesForConnectedPeer() {
+    const db = new Database(':memory:');
+    const fdb = new FederationDB(db);
+    const identity = tmpIdentity();
+    const peer = fdb.addPeer('b.example.com:2');
+    fdb.updatePeerStatus(peer.id, { status: 'Connected', public_key: 'pubkey-b' });
+    const svc = new FederationService({
+        db: fdb, identity, getServerHash: () => 'HASH_A', ourDomain: 'a.example.com:1',
+        getLocalLobbies: () => [],
+        fetchImpl: mockFetch([
+            { json: { status: 'connected', serverHash: 'HASH_A' } },
+            { json: [{ room_id: 'r1', room_name: 'r1', players: 2, max_players: 5 }] }
+        ])
+    });
+    await svc.pollOnce();
+    assert.strictEqual(fdb.listCachedLobbies().length, 1, 'pollOnce must fetch lobbies right after a successful liveness check');
+    db.close();
+}
+
 async function testPollOnceDispatchesByStatus() {
     const db = new Database(':memory:');
     const fdb = new FederationDB(db);
@@ -231,6 +285,112 @@ async function testPollOnceDispatchesByStatus() {
     assert.strictEqual(fdb.getPeerById(suspended.id).status, 'Suspended', 'suspended peer must be skipped entirely');
     assert.strictEqual(fdb.getPeerById(deniedKeyMismatch.id).status, 'Denied', 'key_mismatch Denied peer must be excluded from auto-retry');
     db.close();
+}
+
+async function testCheckNameAvailableAllClear() {
+    const db = new Database(':memory:');
+    const fdb = new FederationDB(db);
+    const identity = tmpIdentity();
+    const peerA = fdb.addPeer('a.example.com:1');
+    fdb.updatePeerStatus(peerA.id, { status: 'Connected', public_key: 'pubkey-a' });
+    const peerB = fdb.addPeer('b.example.com:2');
+    fdb.updatePeerStatus(peerB.id, { status: 'Connected', public_key: 'pubkey-b' });
+    const svc = new FederationService({
+        db: fdb, identity, getServerHash: () => 'HASH_X', ourDomain: 'x.example.com:9',
+        fetchImpl: mockFetch([{ json: { taken: false } }, { json: { taken: false } }])
+    });
+    const available = await svc.checkNameAvailable('Peter');
+    assert.strictEqual(available, true);
+    db.close();
+}
+
+async function testCheckNameAvailableConflict() {
+    const db = new Database(':memory:');
+    const fdb = new FederationDB(db);
+    const identity = tmpIdentity();
+    const peerA = fdb.addPeer('a.example.com:1');
+    fdb.updatePeerStatus(peerA.id, { status: 'Connected', public_key: 'pubkey-a' });
+    const svc = new FederationService({
+        db: fdb, identity, getServerHash: () => 'HASH_X', ourDomain: 'x.example.com:9',
+        fetchImpl: mockFetch([{ json: { taken: true } }])
+    });
+    const available = await svc.checkNameAvailable('Peter');
+    assert.strictEqual(available, false);
+    db.close();
+}
+
+async function testCheckNameAvailableFailsOpenOnTimeout() {
+    const db = new Database(':memory:');
+    const fdb = new FederationDB(db);
+    const identity = tmpIdentity();
+    const peerA = fdb.addPeer('a.example.com:1');
+    fdb.updatePeerStatus(peerA.id, { status: 'Connected', public_key: 'pubkey-a' });
+    const svc = new FederationService({
+        db: fdb, identity, getServerHash: () => 'HASH_X', ourDomain: 'x.example.com:9',
+        fetchImpl: mockFetch([{ throwError: 'ETIMEDOUT' }])
+    });
+    const available = await svc.checkNameAvailable('Peter');
+    assert.strictEqual(available, true, 'an unreachable peer must not block a name — fail open');
+    db.close();
+}
+
+async function testCheckNameAvailableFailsOpenOnHang() {
+    // fetchImpl never settles on its own — only the AbortController's 2s timeout
+    // aborting opts.signal makes it reject, same as a real hanging fetch() would.
+    const db = new Database(':memory:');
+    const fdb = new FederationDB(db);
+    const identity = tmpIdentity();
+    const peerA = fdb.addPeer('a.example.com:1');
+    fdb.updatePeerStatus(peerA.id, { status: 'Connected', public_key: 'pubkey-a' });
+    const hangingFetch = (url, opts) => new Promise((resolve, reject) => {
+        opts.signal.addEventListener('abort', () => {
+            const err = new Error('The operation was aborted');
+            err.name = 'AbortError';
+            reject(err);
+        });
+    });
+    const svc = new FederationService({
+        db: fdb, identity, getServerHash: () => 'HASH_X', ourDomain: 'x.example.com:9',
+        fetchImpl: hangingFetch
+    });
+    const available = await svc.checkNameAvailable('Peter');
+    assert.strictEqual(available, true, 'a hanging peer request must be aborted and fail open, not hang forever');
+    db.close();
+}
+
+async function testReportWinEventSendsSignedPayload() {
+    const db = new Database(':memory:');
+    const fdb = new FederationDB(db);
+    const identity = tmpIdentity();
+    const peer = fdb.addPeer('home.example.com:1');
+    fdb.updatePeerStatus(peer.id, { status: 'Connected', public_key: 'pubkey-home' });
+
+    let capturedBody = null;
+    const svc = new FederationService({
+        db: fdb, identity, getServerHash: () => 'HASH_A', ourDomain: 'visited.example.com:2',
+        fetchImpl: async (url, opts) => { capturedBody = JSON.parse(opts.body); return { ok: true, json: async () => ({ ok: true }) }; }
+    });
+    await svc.reportWinEvent('home.example.com:1', { playerName: 'Peter', roomId: 'roomX' });
+    assert.strictEqual(capturedBody.senderDomain, 'visited.example.com:2', 'report must identify us as the visited server');
+    assert.strictEqual(capturedBody.playerName, 'Peter');
+    assert.strictEqual(capturedBody.roomId, 'roomX');
+    assert.ok(capturedBody.signature);
+    db.close();
+}
+
+async function testReportWinEventSwallowsNetworkFailure() {
+    const db = new Database(':memory:');
+    const fdb = new FederationDB(db);
+    const identity = tmpIdentity();
+    const peer = fdb.addPeer('home.example.com:1');
+    fdb.updatePeerStatus(peer.id, { status: 'Connected', public_key: 'pubkey-home' });
+    const svc = new FederationService({
+        db: fdb, identity, getServerHash: () => 'HASH_A', ourDomain: 'visited.example.com:2',
+        fetchImpl: mockFetch([{ throwError: 'ECONNREFUSED' }])
+    });
+    await svc.reportWinEvent('home.example.com:1', { playerName: 'Peter', roomId: 'roomX' });
+    // no assertion beyond "did not throw" — a guest's home server being briefly unreachable
+    // must not blow up the visited server's game-end flow
 }
 
 async function testSendMessageDeliveredAndFlush() {
@@ -370,7 +530,16 @@ async function run() {
     await testCheckLivenessUnknownBecomesDeniedUnlinked();
     await testCheckLivenessKeyMismatchBecomesDenied();
     await testCheckLivenessNetworkFailureBecomesUnreachable();
+    await testFetchLobbiesCachesOnSuccess();
+    await testFetchLobbiesClearsCacheOnFailure();
+    await testPollOnceAlsoFetchesLobbiesForConnectedPeer();
+    await testCheckNameAvailableAllClear();
+    await testCheckNameAvailableConflict();
+    await testCheckNameAvailableFailsOpenOnTimeout();
+    await testCheckNameAvailableFailsOpenOnHang();
     await testPollOnceDispatchesByStatus();
+    await testReportWinEventSendsSignedPayload();
+    await testReportWinEventSwallowsNetworkFailure();
     await testSendMessageDeliveredAndFlush();
     await testRemovePeerSendsSignedUnlinkThenDeletes();
     await testRoutesPublicHandshakeUnknown();

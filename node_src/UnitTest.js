@@ -34,6 +34,16 @@ module.exports = class UnitTest{
         this.federationHash();
         this.federationDB();
         this.federationServiceInbound();
+        this.federationLobbyCache();
+        this.userDBUsernameExists();
+        this.federationNameCheckInbound();
+        this.federationJoinToken();
+        this.federationGuestSession();
+        this.federationDedupName();
+        this.federationWinEventInbound();
+        this.federationGuestWinCreditsHomeUsername();
+        this.achievementsServiceNoSpuriousWeeklyReset();
+        this.stackingWinTransfersPendingStackToNextPlayer();
 
     }
     clientRepo(){
@@ -1206,6 +1216,371 @@ module.exports = class UnitTest{
         assert.ok(fdb.getPeerById(peerC.id), 'unsigned/forged unlink must not delete the peer');
 
         db.close();
+    }
+    federationLobbyCache(){
+        let Database = require('better-sqlite3');
+        let FederationDB = require('./FederationDB.js');
+        let db = new Database(':memory:');
+        let fdb = new FederationDB(db);
+
+        let peer = fdb.addPeer('peer.example.com:5678');
+        fdb.replaceLobbiesForPeer(peer.id, [
+            { room_id: 'roomA', room_name: 'roomA', players: 2, max_players: 5 },
+            { room_id: 'roomB', room_name: 'roomB', players: 5, max_players: 5 }
+        ]);
+        let cached = fdb.listCachedLobbies();
+        assert.strictEqual(cached.length, 2, 'both rows must be cached');
+        assert.strictEqual(cached[0].domain, 'peer.example.com:5678', 'cached rows must carry the peer domain');
+        assert.strictEqual(cached[0].locked, 0, 'cached rows must include locked: 0');
+        assert.strictEqual(cached.find(r => r.room_id === 'roomA').players, 2);
+
+        // wholesale replace: old rows for this peer must be gone, only new ones remain
+        fdb.replaceLobbiesForPeer(peer.id, [
+            { room_id: 'roomC', room_name: 'roomC', players: 1, max_players: 5 }
+        ]);
+        let afterReplace = fdb.listCachedLobbies();
+        assert.strictEqual(afterReplace.length, 1, 'replace must remove this peer\'s old rows');
+        assert.strictEqual(afterReplace[0].room_id, 'roomC');
+
+        let peer2 = fdb.addPeer('other.example.com:1');
+        fdb.replaceLobbiesForPeer(peer2.id, [{ room_id: 'roomD', room_name: 'roomD', players: 3, max_players: 5 }]);
+        assert.strictEqual(fdb.listCachedLobbies().length, 2, 'rows from different peers must coexist');
+
+        fdb.deleteLobbiesForPeer(peer.id);
+        let afterDelete = fdb.listCachedLobbies();
+        assert.strictEqual(afterDelete.length, 1, 'deleteLobbiesForPeer must remove only that peer\'s rows');
+        assert.strictEqual(afterDelete[0].room_id, 'roomD');
+
+        db.close();
+    }
+    userDBUsernameExists(){
+        let UserDB = require('./UserDB.js').UserDB;
+        let Database = require('better-sqlite3');
+        let db = new Database(':memory:');
+        let udb = new UserDB(db);
+        udb.register('Peter', 'password123', null);
+        assert.strictEqual(udb.usernameExists('Peter'), true);
+        assert.strictEqual(udb.usernameExists('peter'), true, 'must be case-insensitive, matching changeUsername\'s existing COLLATE NOCASE check');
+        assert.strictEqual(udb.usernameExists('Nobody'), false);
+        db.close();
+    }
+    federationNameCheckInbound(){
+        let Database = require('better-sqlite3');
+        let FederationDB = require('./FederationDB.js');
+        let FederationIdentity = require('./FederationIdentity.js');
+        let FederationService = require('./FederationService.js');
+        let UserDB = require('./UserDB.js').UserDB;
+        let fs = require('fs');
+        let os = require('os');
+        let path = require('path');
+
+        let db = new Database(':memory:');
+        let fdb = new FederationDB(db);
+        let udb = new UserDB(new Database(':memory:'));
+        udb.register('Peter', 'password123', null);
+        let tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-'));
+        let identity = new FederationIdentity(tmpDir);
+        let svc = new FederationService({
+            db: fdb, identity, userDB: udb, getServerHash: () => 'HASH_A', ourDomain: 'a.example.com:1'
+        });
+
+        assert.strictEqual(svc.handleNameCheckRequest({ name: 'Peter' }).taken, true);
+        assert.strictEqual(svc.handleNameCheckRequest({ name: 'peter' }).taken, true, 'case-insensitive');
+        assert.strictEqual(svc.handleNameCheckRequest({ name: 'Nobody' }).taken, false);
+
+        db.close();
+    }
+    federationJoinToken(){
+        let Database = require('better-sqlite3');
+        let FederationDB = require('./FederationDB.js');
+        let FederationIdentity = require('./FederationIdentity.js');
+        let FederationService = require('./FederationService.js');
+        let fs = require('fs');
+        let os = require('os');
+        let path = require('path');
+
+        let db = new Database(':memory:');
+        let fdb = new FederationDB(db);
+        let tmpDirA = fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-a-'));
+        let identityA = new FederationIdentity(tmpDirA);
+        let svcA = new FederationService({ db: fdb, identity: identityA, getServerHash: () => 'HASH', ourDomain: 'a.example.com:1' });
+
+        let peerA = fdb.addPeer('a.example.com:1');
+        fdb.updatePeerStatus(peerA.id, { status: 'Connected', public_key: identityA.publicKey });
+
+        let dbB = new Database(':memory:');
+        let fdbB = new FederationDB(dbB);
+        fdbB.addPeer('a.example.com:1');
+        fdbB.updatePeerStatus(1, { status: 'Connected', public_key: identityA.publicKey });
+        let tmpDirB = fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-b-'));
+        let identityB = new FederationIdentity(tmpDirB);
+        let svcB = new FederationService({ db: fdbB, identity: identityB, getServerHash: () => 'HASH', ourDomain: 'b.example.com:2' });
+
+        let token = svcA.issueJoinToken('roomX', 'Peter');
+        let result = svcB.verifyJoinToken('a.example.com:1', token);
+        assert.strictEqual(result.ok, true);
+        assert.strictEqual(result.playerName, 'Peter');
+        assert.strictEqual(result.roomId, 'roomX');
+
+        let replay = svcB.verifyJoinToken('a.example.com:1', token);
+        assert.strictEqual(replay.ok, false);
+        assert.strictEqual(replay.reason, 'replayed', 'the same token must not verify twice');
+
+        let tampered = svcA.issueJoinToken('roomX', 'Peter');
+        let tamperedObj = JSON.parse(Buffer.from(tampered, 'base64').toString('utf8'));
+        tamperedObj.payload.playerName = 'NotPeter';
+        let tamperedToken = Buffer.from(JSON.stringify(tamperedObj)).toString('base64');
+        let tamperedResult = svcB.verifyJoinToken('a.example.com:1', tamperedToken);
+        assert.strictEqual(tamperedResult.ok, false);
+        assert.strictEqual(tamperedResult.reason, 'bad_signature');
+
+        let fromUnknownPeer = svcB.verifyJoinToken('nope.example.com:9', svcA.issueJoinToken('roomX', 'Peter'));
+        assert.strictEqual(fromUnknownPeer.ok, false);
+        assert.strictEqual(fromUnknownPeer.reason, 'unknown_peer');
+
+        db.close(); dbB.close();
+    }
+    federationGuestSession(){
+        let Database = require('better-sqlite3');
+        let FederationDB = require('./FederationDB.js');
+        let FederationIdentity = require('./FederationIdentity.js');
+        let FederationService = require('./FederationService.js');
+        let fs = require('fs');
+        let os = require('os');
+        let path = require('path');
+
+        let db = new Database(':memory:');
+        let fdb = new FederationDB(db);
+        let tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-'));
+        let identity = new FederationIdentity(tmpDir);
+        let svc = new FederationService({ db: fdb, identity, getServerHash: () => 'HASH', ourDomain: 'a.example.com:1' });
+
+        let id = svc.createGuestSession({ room: 'roomX', name: 'Peter2', homeDomain: 'home.example.com:1' });
+        assert.ok(id, 'must return a session id');
+
+        let peeked1 = svc.peekGuestSession(id);
+        let peeked2 = svc.peekGuestSession(id);
+        assert.deepStrictEqual(peeked1, { room: 'roomX', name: 'Peter2', homeDomain: 'home.example.com:1' });
+        assert.deepStrictEqual(peeked2, peeked1, 'peekGuestSession must not delete the entry — repeated peeks return the same payload');
+
+        let consumed = svc.consumeGuestSession(id);
+        assert.strictEqual(consumed.room, 'roomX');
+        assert.strictEqual(consumed.name, 'Peter2');
+        assert.strictEqual(consumed.homeDomain, 'home.example.com:1');
+
+        let secondRead = svc.consumeGuestSession(id);
+        assert.strictEqual(secondRead, null, 'a session must be consumable exactly once');
+        assert.strictEqual(svc.peekGuestSession(id), null, 'peekGuestSession must return null after the entry was consumed');
+
+        assert.strictEqual(svc.consumeGuestSession('does-not-exist'), null);
+
+        let expiredId = svc.createGuestSession({ room: 'roomY', name: 'Ghost', homeDomain: 'home.example.com:1' });
+        svc._guestSessions.get(expiredId).expiry = Date.now() - 1000;
+        assert.ok(svc._guestSessions.has(expiredId), 'expired entry still present before a purge runs');
+        svc.createGuestSession({ room: 'roomZ', name: 'Trigger', homeDomain: 'home.example.com:1' });
+        assert.strictEqual(svc._guestSessions.has(expiredId), false, 'createGuestSession must purge expired entries never consumed by a reader');
+
+        db.close();
+    }
+    federationDedupName(){
+        let { dedupeGuestName } = require('./FederationService.js');
+        let taken = ['Peter', 'Peter2'];
+        assert.strictEqual(dedupeGuestName('Alice', taken), 'Alice', 'no conflict, name unchanged');
+        assert.strictEqual(dedupeGuestName('Peter', taken), 'Peter3', 'first two suffixes already taken, third is free');
+        let manyTaken = [];
+        for (let i = 1; i <= 21; i++) manyTaken.push(i === 1 ? 'Bob' : 'Bob' + i);
+        assert.throws(() => dedupeGuestName('Bob', manyTaken), 'must give up after 20 attempts');
+    }
+    federationWinEventInbound(){
+        let Database = require('better-sqlite3');
+        let FederationDB = require('./FederationDB.js');
+        let FederationIdentity = require('./FederationIdentity.js');
+        let FederationService = require('./FederationService.js');
+        let UserDB = require('./UserDB.js').UserDB;
+        let fs = require('fs');
+        let os = require('os');
+        let path = require('path');
+
+        let db = new Database(':memory:');
+        let fdb = new FederationDB(db);
+        let udb = new UserDB(new Database(':memory:'));
+        let reg = udb.register('Peter', 'password123', null);
+        let tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-'));
+        let identity = new FederationIdentity(tmpDir);
+        let svc = new FederationService({ db: fdb, identity, userDB: udb, getServerHash: () => 'HASH', ourDomain: 'home.example.com:1' });
+
+        let peer = fdb.addPeer('visited.example.com:2');
+        let visitedIdentity = new FederationIdentity(fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-visited-')));
+        fdb.updatePeerStatus(peer.id, { status: 'Connected', public_key: visitedIdentity.publicKey });
+
+        let goldBefore = udb.getGold(reg.id);
+        let ts = Date.now();
+        let payloadStr = 'visited.example.com:2' + 'Peter' + 'roomX' + ts;
+        let signature = visitedIdentity.sign(payloadStr);
+        let accepted = svc.handleWinEventReport({ senderDomain: 'visited.example.com:2', playerName: 'Peter', roomId: 'roomX', ts, signature });
+        assert.strictEqual(accepted, true);
+        assert.ok(udb.getGold(reg.id) > goldBefore, 'gold must increase using our own rates');
+
+        let rejected = svc.handleWinEventReport({ senderDomain: 'visited.example.com:2', playerName: 'Peter', roomId: 'roomX', ts: ts + 1, signature: 'garbage' });
+        assert.strictEqual(rejected, false, 'bad signature must be rejected');
+
+        let unknownTs = ts + 2;
+        let unknownPlayer = svc.handleWinEventReport({ senderDomain: 'visited.example.com:2', playerName: 'NoSuchPlayer', roomId: 'roomX', ts: unknownTs, signature: visitedIdentity.sign('visited.example.com:2' + 'NoSuchPlayer' + 'roomX' + unknownTs) });
+        assert.strictEqual(unknownPlayer, false, 'a report for a nonexistent local account must no-op');
+
+        let staleTs = Date.now() - 60000; // older than the 30s freshness window
+        let staleSignature = visitedIdentity.sign('visited.example.com:2' + 'Peter' + 'roomX' + staleTs);
+        let staleGoldBefore = udb.getGold(reg.id);
+        let stale = svc.handleWinEventReport({ senderDomain: 'visited.example.com:2', playerName: 'Peter', roomId: 'roomX', ts: staleTs, signature: staleSignature });
+        assert.strictEqual(stale, false, 'a stale ts (older than the freshness window) must be rejected');
+        assert.strictEqual(udb.getGold(reg.id), staleGoldBefore, 'a rejected stale report must not credit gold');
+
+        let replayGoldBefore = udb.getGold(reg.id);
+        let replayed = svc.handleWinEventReport({ senderDomain: 'visited.example.com:2', playerName: 'Peter', roomId: 'roomX', ts, signature });
+        assert.strictEqual(replayed, false, 'replaying the exact same signed report must be rejected');
+        assert.strictEqual(udb.getGold(reg.id), replayGoldBefore, 'a replayed report must not credit gold twice');
+
+        let freshTs = Date.now();
+        let freshSignature = visitedIdentity.sign('visited.example.com:2' + 'Peter' + 'roomX' + freshTs);
+        let freshGoldBefore = udb.getGold(reg.id);
+        let freshAccepted = svc.handleWinEventReport({ senderDomain: 'visited.example.com:2', playerName: 'Peter', roomId: 'roomX', ts: freshTs, signature: freshSignature });
+        assert.strictEqual(freshAccepted, true, 'a different legitimate report (different ts/signature) must still succeed');
+        assert.ok(udb.getGold(reg.id) > freshGoldBefore, 'gold must increase again for the distinct, non-replayed report');
+
+        db.close();
+    }
+    federationGuestWinCreditsHomeUsername(){
+        // Fix 1 regression coverage: when a guest's deduped display name collides with an
+        // unrelated local account name, the win-report must still credit the AUTHENTICATED
+        // home username carried via createGuestSession's homePlayerName field, never the
+        // deduped display name used for the client-facing room/chat seat.
+        let Database = require('better-sqlite3');
+        let FederationDB = require('./FederationDB.js');
+        let FederationIdentity = require('./FederationIdentity.js');
+        let FederationService = require('./FederationService.js');
+        let UserDB = require('./UserDB.js').UserDB;
+        let fs = require('fs');
+        let os = require('os');
+        let path = require('path');
+
+        // Home server (A): has the real "Dragon" account plus an unrelated "Dragon2"
+        // account that must never be touched by this win-report.
+        let homeDb = new Database(':memory:');
+        let homeFdb = new FederationDB(homeDb);
+        let homeUdb = new UserDB(new Database(':memory:'));
+        let dragon = homeUdb.register('Dragon', 'password123', null);
+        let unrelatedDragon2 = homeUdb.register('Dragon2', 'password123', null);
+        let homeTmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-home-'));
+        let homeIdentity = new FederationIdentity(homeTmpDir);
+        let homeSvc = new FederationService({ db: homeFdb, identity: homeIdentity, userDB: homeUdb, getServerHash: () => 'HASH', ourDomain: 'home.example.com:1' });
+
+        // Visited server (B): pin the peer entry so it can sign win-events home accepts.
+        let visitedTmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fed-test-visited-'));
+        let visitedIdentity = new FederationIdentity(visitedTmpDir);
+        let visitedPeer = homeFdb.addPeer('visited.example.com:2');
+        homeFdb.updatePeerStatus(visitedPeer.id, { status: 'Connected', public_key: visitedIdentity.publicKey });
+
+        let visitedDb = new Database(':memory:');
+        let visitedFdb = new FederationDB(visitedDb);
+        let visitedSvc = new FederationService({ db: visitedFdb, identity: visitedIdentity, getServerHash: () => 'HASH', ourDomain: 'visited.example.com:2' });
+
+        // B's room already has a local "Dragon" seated -> the guest's authenticated home
+        // username "Dragon" collides and must be deduped for display purposes only.
+        let dedupedName = FederationService.dedupeGuestName('Dragon', ['Dragon']);
+        assert.strictEqual(dedupedName, 'Dragon2', 'display name must be suffixed on collision');
+
+        // Mirrors /federated-join in FederationRoutes.js after the Fix 1 change.
+        let sessionId = visitedSvc.createGuestSession({
+            room: 'roomX', name: dedupedName, homePlayerName: 'Dragon', homeDomain: 'home.example.com:1'
+        });
+        let payload = visitedSvc.consumeGuestSession(sessionId);
+        assert.strictEqual(payload.name, 'Dragon2', 'the deduped display name must still be carried for seat/chat display');
+        assert.strictEqual(payload.homePlayerName, 'Dragon', 'the authenticated home username must be carried separately');
+
+        // Mirrors server.js's federationGuestMark handler after the Fix 1 change.
+        let federatedGuest = { homeDomain: payload.homeDomain, playerName: String(payload.homePlayerName).substring(0, 32) };
+        assert.strictEqual(federatedGuest.playerName, 'Dragon', 'socket.federatedGuest.playerName must come from homePlayerName, not the deduped name');
+
+        let dragonGoldBefore = homeUdb.getGold(dragon.id);
+        let dragon2GoldBefore = homeUdb.getGold(unrelatedDragon2.id);
+
+        // Mirrors server.js's reportWinEvent call using the federatedGuest payload, then
+        // the home server's inbound handler (handleWinEventReport).
+        let ts = Date.now();
+        let signature = visitedIdentity.sign('visited.example.com:2' + federatedGuest.playerName + 'roomX' + ts);
+        let accepted = homeSvc.handleWinEventReport({
+            senderDomain: 'visited.example.com:2', playerName: federatedGuest.playerName, roomId: 'roomX', ts, signature
+        });
+
+        assert.strictEqual(accepted, true, 'a valid win-report for the authenticated home username must be accepted');
+        assert.ok(homeUdb.getGold(dragon.id) > dragonGoldBefore, 'the real home account (Dragon) must be credited');
+        assert.strictEqual(homeUdb.getGold(unrelatedDragon2.id), dragon2GoldBefore, 'the unrelated Dragon2 account must never be credited');
+
+        homeDb.close();
+        visitedDb.close();
+    }
+    achievementsServiceNoSpuriousWeeklyReset(){
+        let Database = require('better-sqlite3');
+        let UserDB = require('./UserDB.js').UserDB;
+        let AchievementsService = require('./AchievementsService.js');
+        let db = new UserDB(new Database(':memory:'));
+        let emitted = [];
+        let io = { emit: function(ev, data){ emitted.push({ ev: ev, data: data }); }, sockets: { sockets: {} } };
+        let svc = new AchievementsService(db, io);
+
+        // Seed today's daily row too, so its expected first-time generation
+        // (unrelated to this test) doesn't show up in the emit count below.
+        db.setChallenges('daily', svc._dateKey(), JSON.stringify([
+            { type: 'win_rounds', label: 'x', x: 1, xp: 20, progress: 0, completed: false }
+        ]), Date.now(), svc._nextMidnightMs());
+
+        // A legitimately current-week weekly challenge set that happens to be
+        // within 23h of its real, correct weekly expiry -- naturally true for
+        // ~1 day out of every 7 -- must not be treated as a stale/wrong entry.
+        let weekKey = svc._weekKey();
+        let now = Date.now();
+        db.setChallenges('weekly', weekKey, JSON.stringify([
+            { type: 'win_matches', label: 'x', x: 3, xp: 100, progress: 0, completed: false }
+        ]), now, now + 10 * 3600000);
+
+        let reg = db.register('WeeklyTester', 'password123', null);
+        db.incrementChallengeProgress(reg.id, 'weekly', weekKey, 0, 2); // real progress: 2/3
+
+        svc.ensureFreshChallenges();
+
+        assert.strictEqual(emitted.length, 0, 'a legitimately-soon-to-expire but still current-week weekly entry must not trigger a challengesReset broadcast');
+        let progressAfter = db.getUserChallengeProgress(reg.id, 'weekly', weekKey);
+        assert.strictEqual(progressAfter[0].progress, 2, 'real per-user progress must be untouched by ensureFreshChallenges');
+    }
+    stackingWinTransfersPendingStackToNextPlayer(){
+        let ClientRepository = require('./UNO/UNOClientRepository.js');
+        let UNOClient = require('./UNO/UNOClient.js');
+        let GameRulesModel = require('./UNO/GameRulesModel.js');
+        let Card = require('./UNO/Card.js');
+
+        let repo = new ClientRepository();
+        let a = new UNOClient("A"); let b = new UNOClient("B");
+        repo.insert(a); repo.insert(b);
+        let gm = new GameRulesModel(repo, 5, 'stacking', false, {});
+        gm.deal();
+        a.setTurn(true);
+
+        // B already has a pending +2 stack (count=2) from an earlier play.
+        gm.stackPending = { count: 2, type: 'p', color: 'r', max: gm.stackCap };
+
+        // A empties their hand by playing their LAST card as a +2, stacking onto
+        // the pending total (2 + 2 = 4) and winning the round in the same move.
+        a.getCards().slice().forEach(c => a.removeCard(c));
+        let lastCard = new Card(9201, 'gp');
+        gm.cardRepository.insert(lastCard);
+        a.addCard(lastCard);
+
+        let bCountBefore = b.getCardsCount();
+        gm.place(a, { id: lastCard.getId(), type: lastCard.getType() });
+
+        assert.strictEqual(a.getHasWon(), true, 'A must still be declared the round winner');
+        assert.strictEqual(b.getCardsCount(), bCountBefore + 4, 'the accumulated +4 stack must still be dealt to B, not discarded just because the stacker won the round on that same play');
+        assert.strictEqual(gm.stackPending, null, 'stack must be resolved (cleared) after being applied');
     }
 
 };
