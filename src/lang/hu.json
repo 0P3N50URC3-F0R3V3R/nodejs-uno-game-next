@@ -463,7 +463,7 @@
     "manual": "Kézikönyv",
     "manual_intro": "UNO böngészőben — klasszikus szabályok, illetve opcionális játékmódok, amelyeket szoba létrehozásakor kombinálhatsz.",
     "manual_section_basics": "Alapszabályok",
-    "manual_basics_text": "Játssz a felső lapra illő színnel, számmal vagy szimbólummal, vagy játssz egy Spektrum lapot. Ha nem tudsz lapot rakni, húzz egyet. Mondj UNO-t, ha egy lapod marad — ha elfelejted és rajtakapnak, büntetőlapokat kell húznod. Aki elsőként elfogyasztja a kezét, nyeri a kört.",
+    "manual_basics_text": "Játssz a felső lapra illő színnel, számmal vagy szimbólummal, vagy játssz egy Spektrum lapot. Ha nem tudsz lapot rakni, húzz egyet. Mondj UNO-t, ha egy lapod marad — ha elfelejted és rajtakapnak, büntetőlapokat kell húznod. Aki elsőként leteszi az összes kártyát a kezéből, nyeri a kört.",
     "manual_section_classic": "Akciólapok",
     "manual_card_number_title": "Szám",
     "manual_card_number_desc": "Illő színre vagy számra játszható.",
@@ -480,10 +480,11 @@
     "manual_card_p10_desc": "Válaszd ki az új színt. A következő játékos húz 10 lapot és kimarad.",
     "manual_card_m2_desc": "Kihagyja a következő 2 játékost.",
     "manual_card_th_desc": "Elcseréled a teljes kezed egy általad választott játékossal.",
-    "manual_card_rda_desc": "A következő játékos eldobja a kezét, és egy ugyanolyan méretű újat húz.",
+    "manual_card_rda_desc": "A következő játékos eldobja a kezében lévő összes kártyát, és egy ugyanolyan méretű újat húz.",
     "manual_card_tg1_desc": "Elvehetsz 1 általad választott lapot egy legalább 2 lappal rendelkező játékostól.",
     "manual_card_tg2_desc": "Elvehetsz 2 általad választott lapot egy legalább 3 lappal rendelkező játékostól.",
-    "manual_card_rot_desc": "Mindenki teljes kezét továbbadja a következő játékosnak.",
+    "manual_card_rot_desc": "Mindenki továbbadja a kezében lévő összes kártyát a következő játékosnak.",
+    "manual_card_rot_desc": "Mindenki továbbadja a kezében lévő összes kártyát a következő játékosnak.",
     "manual_card_rbw_desc": "Szín nélküli Spektrum. A következő játékos bármilyen lapot lerakhat, bármilyen színben.",
     "manual_hoarder_note": "A Nextgen Cards azt a játékost is kiejti, akinek a keze 40+ lapra nő (felhalmozás), ugyanúgy, ahogy a Battle Royale kiejtés működik."
 }
