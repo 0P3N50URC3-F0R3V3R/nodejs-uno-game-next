@@ -114,7 +114,7 @@
     "quit_confirm": "Leave room?",
     "yes": "Yes",
     "no": "No",
-    "waiting_start": "Waiting for game to start or other players!",
+    "waiting_start": "Waiting for game start/players!",
     "ready": "Ready!",
     "series_winner": "{name} wins the series!",
     "round_winner": "{name} won!",
