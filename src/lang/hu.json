@@ -150,7 +150,7 @@
     "ev_plus4": "+4",
     "ev_uno": "UNO!",
     "ev_uno_fail": "+8 NEM NYOMOTT UNO-T!",
-    "ev_stack": "+{n} HALMOZHATÓ",
+    "ev_stack": "+{n} HALMOZÁS",
     "level_up": "SZINT LÉPÉS!",
     "xp_winner": "GYŐZTES!",
     "round_over": "KÖR VÉGE",
