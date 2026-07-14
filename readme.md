@@ -1,6 +1,6 @@
 # UNO Web
 
-A multiplayer browser-based UNO card game with persistent accounts, achievements, leaderboards, and full localization in 23 languages.
+A multiplayer browser-based UNO card game with persistent accounts, achievements, leaderboards, cross-server federation, and full localization in 25 languages.
 
 > **Based on** [houseofbits/nodejs-uno-game](https://github.com/houseofbits/nodejs-uno-game) — the original Node.js + Vue UNO engine. This project extends it with a full user system, achievement framework, statistics, daily/weekly challenges, jukebox, admin panel, and many gameplay improvements.
 
@@ -17,26 +17,28 @@ A multiplayer browser-based UNO card game with persistent accounts, achievements
 ### Gameplay
 - Classic UNO rules with card deck reshuffling, skip, reverse, draw-two, wild, and wild draw-four
 - **Rulesets**: Original (standard UNO) and Stacking / Punishment Stack (+2/+4 cards stack to +8 max)
-- Nextgen Ruleset: Addition to the original gameplay with more cards, stacking and punishment cards
+- Nextgen Ruleset: extended 222-card deck, hotter punishment stacking (+6..+20), hoarder-elimination rule, target-select cards (steal 1/2, trade hands)
+- Multi Discard house rule (Double Deck / Nextgen only): auto-discard same-color card bundles, toggle per room
 - Double deck gamemode
 - Battle Royale gamemode - Only 1 can left 
 - Up to 5 players per room (human + AI)
 - AI opponents with configurable difficulty (Easy / Medium / Hard)
 - Room passwords for private games
+- AFK auto-play with configurable timeout and two-strike enforcement
+- Hardcore mode: disables playable-card highlighting, room-wide or personal-only toggle
 - Animated card plays, GSAP-powered dealing and drawing
-- Spin-wheel animation for selecting the first player
+- Cryptex-style spinner animation for selecting the first player
+- Room-creation settings (ruleset, rounds, AFK, slots, etc.) persist to localStorage between sessions
 - 6 customizable table backgrounds
 
-### Federation Networking - Prototype
-
-## THIS IS A PROTOTYPE FEATURE, NOT TESTED!!! NOT FINISHED!
-
-- Now you can federate servers.  You can add each other server's in the admin interface, and the server's can collaborate in games.
-Both server owners need to add each other server:port in admin interface, only after that will handshake happen. After that they 
-will sync player ID's, and exchange keys. After each server users can play with other server's players, in the background there are 
-channel and user syncing, even the hall of fame.
-
-## THIS IS A PROTOTYPE FEATURE, NOT TESTED!!! NOT FINISHED!
+### Federation Networking
+Cross-server play between independently hosted UNOWeb instances:
+- Admins link peer servers (handshake, key exchange, liveness polling) from the admin panel
+- Cached cross-server lobby list surfaced in the join screen, with join-token-based redirect into a federated guest session
+- Guest player names deduped against the local room before joining
+- Cross-server win-event reporting keeps the hall of fame in sync
+- Peer messaging/conversation log and suspend/resume controls in the admin panel
+- Still early-stage: test before relying on it in production
 
 ### User Accounts
 - Register and login with persistent profiles
@@ -44,6 +46,7 @@ channel and user syncing, even the hall of fame.
 - Change username and password in-profile
 - XP and level progression (120 levels, XP scales per level)
 - Per-session single-login enforcement — logging in on a new device kicks the previous session with an overlay notification
+- One-click "clear local data" button (profile panel) to wipe locally stored settings/tokens
 
 ### Achievements
 Achievements are grouped into four categories:
@@ -99,9 +102,9 @@ Six collapsible side panels, each pinnable (persists across sessions via localSt
 - Turn chime toggle, per-volume sliders for effects and music
 
 ### Localization
-Full UI translation in 23 languages via a runtime language switcher:
+Full UI translation in 25 languages via a runtime language switcher:
 
-Bulgarian · Czech · Danish · German · Greek · English · Spanish · Finnish · French · Hungarian · Indonesian · Italian · Dutch · Norwegian · Polish · Portuguese (BR) · Portuguese (PT) · Romanian · Russian · Swedish · Turkish · Ukrainian · Vietnamese
+Bulgarian · Czech · Danish · German · Greek · English · Spanish · Finnish · French · Hungarian · Indonesian · Italian · Japanese · Dutch · Norwegian · Polish · Portuguese (BR) · Portuguese (PT) · Romanian · Russian · Swedish · Turkish · Ukrainian · Vietnamese · Chinese
 
 ### Scale-to-Fit
 - Desktop: game scales down proportionally if the browser window is smaller than 1300×870, preserving the full layout
@@ -132,6 +135,7 @@ Bulgarian · Czech · Danish · German · Greek · English · Spanish · Finnish
 | Build | Webpack via Vue CLI |
 | Image processing | `sharp` (avatar resizing) |
 | Audio | Howler.js |
+| Security | `bcryptjs`, `express-rate-limit`, `svg-captcha` |
 
 ---
 
@@ -180,7 +184,7 @@ Create `config.json` in the project root:
 
 ## Admin Panel
 
-Accessible at `/admin` (requires `adminPassword` from config):
+Accessible at `/admin` (requires `adminPassword` from config, CAPTCHA-gated login, rate-limited):
 
 - View all registered users
 - Edit stats (XP, wins, losses, play time, etc.)
@@ -188,6 +192,7 @@ Accessible at `/admin` (requires `adminPassword` from config):
 - Rename users
 - Upload or delete avatars
 - Delete accounts
+- Manage federation peers (link/suspend/resume, message log)
 
 ---
 
@@ -200,14 +205,20 @@ node_src/
   AchievementsService.js  Achievement trigger logic and unlock dispatch
   achievements_data.js    Achievement and challenge template definitions
   GameServiceFactory.js   Room/game lifecycle
-  GameRulesModel.js       Core UNO rules engine
-  UNOGameService.js       Per-room game state and socket handling
-  AIStrategy.js           AI player decision logic
+  FriendsService.js       Friend requests, invites
+  forumRoutes.js / ForumDB.js  Forum boards/threads/posts
+  FederationDB.js / FederationService.js  Peer registry, handshake, lobby/win-event sync
+  FederationIdentity.js / FederationHash.js  Server identity keys, message signing
+  FederationRoutes.js     Federation + admin-federation HTTP endpoints
+  UNO/
+    GameRulesModel.js     Core UNO rules engine (Original/Stacking/Nextgen/BR)
+    UNOGameService.js     Per-room game state and socket handling
+    AIStrategy.js         AI player decision logic
 src/
   clientApp.vue          Root app (socket, scale-to-fit, session kick overlay)
   UnoGame.vue            Main game view (lobby, board, panels)
   components/            All UI panels and game components
-  lang/                  23-language JSON translation files
+  lang/                  25-language JSON translation files
   sound.js               Howler.js audio wrapper
   panelManager.js        Reactive panel registry (Vue.observable)
 public/
