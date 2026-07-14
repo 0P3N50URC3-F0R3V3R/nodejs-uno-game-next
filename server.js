@@ -12,6 +12,7 @@ const FederationDB = require('./node_src/FederationDB.js');
 const FederationIdentity = require('./node_src/FederationIdentity.js');
 const FederationService = require('./node_src/FederationService.js');
 const { computeServerHash } = require('./node_src/FederationHash.js');
+const Logger = require('./node_src/Logger.js');
 let fs = require('fs');
 let path = require('path');
 let multer = require('multer');
@@ -23,6 +24,15 @@ const svgCaptcha = require('svg-captcha');
 let config = {};
 const configPath = process.env.UNO_CONFIG_PATH || path.join(__dirname, 'config.json');
 try { config = JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch(e) {}
+
+Logger.init(config.logging || {}, process.env.UNO_LOGS_DIR || path.join(__dirname, 'logs'));
+
+process.on('uncaughtException', function(err){
+    Logger.log('system', 'uncaught_exception', null, { message: err.message, stack: err.stack });
+});
+process.on('unhandledRejection', function(reason){
+    Logger.log('system', 'unhandled_rejection', null, { reason: (reason && reason.message) || String(reason) });
+});
 
 const inviteTokens = new Map();
 setInterval(() => { const now = Date.now(); inviteTokens.forEach((v, k) => { if (v.expires < now) inviteTokens.delete(k); }); }, 300000);
@@ -43,14 +53,24 @@ setInterval(function() {
     adminSessions.forEach(function(v, k) { if (v < now) adminSessions.delete(k); });
 }, 60000);
 
+function logAdminRequest(req){
+    const body = Object.assign({}, req.body || {});
+    delete body.password;
+    delete body._adminPassword;
+    Object.keys(body).forEach(function(k){
+        if (typeof body[k] === 'string' && body[k].length > 200) body[k] = body[k].substring(0, 200) + '...';
+    });
+    Logger.log('admin', 'admin_request', null, { method: req.method, path: req.originalUrl, body: body });
+}
+
 function adminAuth(req, res, next){
     const adminToken = req.headers['x-admin-token'];
     if (adminToken) {
         const exp = adminSessions.get(adminToken);
-        if (exp && exp > Date.now()) { next(); return; }
+        if (exp && exp > Date.now()) { logAdminRequest(req); next(); return; }
     }
     const pass = req.headers['x-admin-password'] || (req.body && req.body._adminPassword);
-    if (pass && pass === config.adminPassword) { next(); return; }
+    if (pass && pass === config.adminPassword) { logAdminRequest(req); next(); return; }
     res.status(401).json({error: 'Unauthorized'});
 }
 
@@ -61,6 +81,11 @@ if (config.sessionExpiryDays) userDB.sessionExpiryDays = config.sessionExpiryDay
 
 //Perform unit tests on some required logic
 let unitTest = new UnitTest();
+
+// UnitTest's Logger coverage re-inits the shared Logger singleton against
+// scratch temp directories and leaves it there; restore the real config here
+// so production log calls land in the configured logs directory.
+Logger.init(config.logging || {}, process.env.UNO_LOGS_DIR || path.join(__dirname, 'logs'));
 
 application.get('/', function(request, response){
     response.sendFile(__dirname + '/client/index.html');
@@ -91,6 +116,8 @@ Object.keys(networkInterfaces).forEach(function(name){
         }
     });
 });
+
+Logger.log('system', 'server_start', null, { version: pkgVersion, port: PORT, endpoints: endpoints });
 
 console.log('__   __  __    _  _______    _     _  _______  _______ ');
 console.log('|  | |  ||  |  | ||       |  | | _ | ||       ||  _    |');
@@ -141,6 +168,7 @@ application.post('/api/auth/register', registerLimiter, async function(req, res)
         if (!available) { res.status(400).json({ error: 'Username already taken' }); return; }
     }
     let result = userDB.register(b.username, b.password, b.email);
+    Logger.log('auth', 'register', result.id || null, { username: b.username, success: !result.error, error: result.error || null });
     res.status(result.error ? 400 : 200).json(result);
 });
 
@@ -150,6 +178,7 @@ application.post('/api/auth/login', function(req, res){
     let password = typeof b.password === 'string' ? b.password.substring(0, 128) : '';
     if (!username || !password) { res.status(400).json({ error: 'Invalid input' }); return; }
     let result = userDB.login(username, password);
+    Logger.log('auth', 'login', result.id || null, { username: username, success: !result.error, error: result.error || null });
     res.status(result.error ? 400 : 200).json(result);
 });
 
@@ -205,6 +234,8 @@ application.post('/api/profile/change-username', async function(req, res){
 
 application.post('/api/auth/logout', function(req, res){
     let b = req.body || {};
+    const user = userDB.getUserByToken(b.token);
+    Logger.log('auth', 'logout', user ? user.id : null, {});
     res.json(userDB.logout(b.token));
 });
 
@@ -497,6 +528,38 @@ application.post('/api/admin/challenges/reroll/:type', adminAuth, function(req, 
     if (type !== 'daily' && type !== 'weekly') { res.status(400).json({ error: 'type must be daily or weekly' }); return; }
     const result = achievSvc.forceReroll(type);
     res.json({ ok: true, count: result.challenges.length, dateKey: result.dateKey, expiresAt: result.expiresAt });
+});
+
+application.get('/api/admin/logs/settings', adminAuth, function(req, res) {
+    res.json(config.logging || { enabled: false, maxFileSizeMB: 5, maxFilesPerCategory: 10 });
+});
+
+application.put('/api/admin/logs/settings', adminAuth, function(req, res) {
+    const b = req.body || {};
+    const enabled = !!b.enabled;
+    const maxFileSizeMB = parseInt(b.maxFileSizeMB);
+    const maxFilesPerCategory = parseInt(b.maxFilesPerCategory);
+    if (isNaN(maxFileSizeMB) || maxFileSizeMB < 1 || maxFileSizeMB > 100) { res.status(400).json({ error: 'maxFileSizeMB must be 1-100' }); return; }
+    if (isNaN(maxFilesPerCategory) || maxFilesPerCategory < 1 || maxFilesPerCategory > 100) { res.status(400).json({ error: 'maxFilesPerCategory must be 1-100' }); return; }
+    config.logging = Object.assign({}, config.logging, { enabled: enabled, maxFileSizeMB: maxFileSizeMB, maxFilesPerCategory: maxFilesPerCategory });
+    try { fs.writeFileSync(configPath, JSON.stringify(config, null, 2)); } catch(e) {}
+    Logger.updateConfig(config.logging);
+    res.json(config.logging);
+});
+
+application.get('/api/admin/logs/files', adminAuth, function(req, res) {
+    const category = req.query.category;
+    if (Logger.CATEGORIES.indexOf(category) === -1) { res.status(400).json({ error: 'Invalid category' }); return; }
+    res.json(Logger.listFiles(category));
+});
+
+application.get('/api/admin/logs/file', adminAuth, function(req, res) {
+    const category = req.query.category;
+    const name = req.query.name;
+    if (Logger.CATEGORIES.indexOf(category) === -1) { res.status(400).json({ error: 'Invalid category' }); return; }
+    const lines = Logger.readFile(category, name);
+    if (lines === null) { res.status(404).json({ error: 'File not found' }); return; }
+    res.json({ lines: lines });
 });
 
 application.get('/api/leaderboard', function(req, res){
@@ -842,6 +905,7 @@ function awardRoundXP(gs){
                 const goldResult = userDB.awardGold(sock.userId, _goldWin);
                 if (goldResult) {
                     io._goldCooldowns.set(cooldownKey, Date.now());
+                    Logger.log('game', 'gold_awarded', sock.userId, { amount: _goldWin, newTotal: goldResult.gold, reason: 'win' });
                     io.to(sid).emit('goldAwarded', {
                         amount: _goldWin,
                         newTotal: goldResult.gold,
@@ -874,6 +938,7 @@ function awardRoundXP(gs){
         if (!(guestMatchDuration >= 120 && guestRoundsPlayed >= 3 && guestCooldownOk)) return;
 
         io._goldCooldowns.set(guestCooldownKey, Date.now());
+        Logger.log('game', 'gold_report_sent', null, { homeDomain: sock.federatedGuest.homeDomain, playerName: sock.federatedGuest.playerName, roomId: gs.getId() });
         federationService.reportWinEvent(sock.federatedGuest.homeDomain, {
             playerName: sock.federatedGuest.playerName,
             roomId: gs.getId()
@@ -995,7 +1060,6 @@ io.sockets.on('connection', function(socket) {
 
     socket.on('globalChat', function(data) {
         if (!socket.userId) return;
-        if (isRateLimited(socket, 'globalChat')) return;
         const raw = (data && typeof data.text === 'string') ? data.text : String(data || '');
         const clean = raw.substring(0, 200).trim();
         if (!clean) return;
@@ -1350,6 +1414,7 @@ io.sockets.on('connection', function(socket) {
     });
 
     socket.on('disconnect', function(){
+        Logger.log('system', 'socket_disconnect', socket.userId || null, { hadGame: !!socket.currentGameService });
         let gs = socket.currentGameService;
         if(!gs) return;
 

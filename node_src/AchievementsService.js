@@ -1,5 +1,6 @@
 'use strict';
 const { ACHIEVEMENTS, CHALLENGE_TEMPLATES } = require('./achievements_data.js');
+const Logger = require('./Logger.js');
 
 class AchievementsService {
     constructor(db, io) {
@@ -287,6 +288,7 @@ class AchievementsService {
     }
 
     trigger(userId, socketId, eventType, ctx) {
+        Logger.log('game', eventType, userId || null, ctx || {});
         if (!userId) return;
         if (eventType === 'round_end') this.ensureFreshChallenges();
         this._handleStatBump(userId, eventType, ctx);

@@ -71,7 +71,7 @@ Each achievement awards **AP (Achievement Points)** and XP. A toast notification
 
 ### Social part
 - Global Chat
-- Ingamne Chat
+- Ingame Chat
 - PM chat per player
 - Friend system
 - Invitation System

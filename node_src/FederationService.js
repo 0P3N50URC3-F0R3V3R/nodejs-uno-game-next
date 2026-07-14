@@ -1,6 +1,7 @@
 'use strict';
 const crypto = require('crypto');
 const FederationIdentity = require('./FederationIdentity.js');
+const Logger = require('./Logger.js');
 
 function dedupeGuestName(name, takenNames) {
     const taken = new Set(takenNames);
@@ -115,6 +116,7 @@ class FederationService {
 
         const goldAmount = this.userDB.goldGetEffective('gold_win');
         this.userDB.awardGold(user.id, goldAmount);
+        Logger.log('game', 'gold_awarded', user.id, { amount: goldAmount, reason: 'federated_win', senderDomain, roomId });
         this._usedWinEventSignatures.set(signature, ts + TOKEN_FRESHNESS_MS);
         return true;
     }

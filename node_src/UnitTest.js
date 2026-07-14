@@ -2,6 +2,8 @@ let ClientRepository = require('./UNO/UNOClientRepository.js');
 let Client = require('./Client.js');
 let UNOClient = require('./UNO/UNOClient.js');
 let GameRulesModel = require('./UNO/GameRulesModel.js');
+let Logger = require('./Logger.js');
+let os = require('os');
 
 const assert = require('assert');
 
@@ -48,6 +50,9 @@ module.exports = class UnitTest{
         this.multiDiscardRuleOffByDefaultDoesNotBundle();
         this.multiDiscardRuleIgnoresActionAndWildCards();
         this.requiresTargetCardAsLastCardWinsInstantlyWithoutPendingInteraction();
+        this.loggerRespectsEnabledToggleAndWritesJsonLines();
+        this.loggerRotatesOnSizeAndPrunesOldFiles();
+        this.loggerReadFileRejectsInvalidNamesAndCategories();
 
     }
     clientRepo(){
@@ -1717,6 +1722,71 @@ module.exports = class UnitTest{
         gm.place(a, { id: skipA.getId(), type: skipA.getType() });
 
         assert.strictEqual(a.getCardsCount(), 1, 'action cards must never bundle, even with a matching duplicate in hand');
+    }
+
+    loggerRespectsEnabledToggleAndWritesJsonLines(){
+        let fs = require('fs');
+        let path = require('path');
+        let tmpDir = path.join(os.tmpdir(), 'uno-logger-test-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+
+        Logger.init({ enabled: false, maxFileSizeMB: 5, maxFilesPerCategory: 10 }, tmpDir);
+        Logger.log('system', 'test_event', 1, { foo: 'bar' });
+        assert.strictEqual(fs.existsSync(tmpDir), false, 'disabled logger must not create any files');
+
+        Logger.init({ enabled: true, maxFileSizeMB: 5, maxFilesPerCategory: 10 }, tmpDir);
+        Logger.log('system', 'test_event', 1, { foo: 'bar' });
+        let files = Logger.listFiles('system');
+        assert.strictEqual(files.length, 1, 'enabled logger must create exactly one file on first write');
+        assert.ok(/^system_.*\.log$/.test(files[0].name), 'filename must be category-prefixed');
+
+        let lines = Logger.readFile('system', files[0].name);
+        assert.strictEqual(lines.length, 1);
+        assert.strictEqual(lines[0].event, 'test_event');
+        assert.strictEqual(lines[0].userId, 1);
+        assert.deepStrictEqual(lines[0].data, { foo: 'bar' });
+        assert.ok(/^\d{4}-\d{2}-\d{2}T/.test(lines[0].ts), 'ts must be an ISO timestamp');
+
+        assert.strictEqual(Logger.listFiles('bogus').length, 0, 'unknown category must return empty list, not throw');
+        Logger.log('bogus', 'x', 1, {});
+
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+
+    loggerRotatesOnSizeAndPrunesOldFiles(){
+        let fs = require('fs');
+        let path = require('path');
+        let tmpDir = path.join(os.tmpdir(), 'uno-logger-test-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+
+        // maxFileSizeMB tiny enough that every write rotates; maxFilesPerCategory caps retention to 3
+        Logger.init({ enabled: true, maxFileSizeMB: 0.0001, maxFilesPerCategory: 3 }, tmpDir);
+        for (let i = 0; i < 10; i++) {
+            Logger.log('game', 'test_event_' + i, 5, { i: i });
+        }
+        let files = Logger.listFiles('game');
+        assert.strictEqual(files.length, 3, 'must prune down to maxFilesPerCategory after repeated rotations');
+
+        // Newest file must contain the last write
+        let newestLines = Logger.readFile('game', files[0].name);
+        assert.strictEqual(newestLines[newestLines.length - 1].event, 'test_event_9', 'newest file must hold the most recent write');
+
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+
+    loggerReadFileRejectsInvalidNamesAndCategories(){
+        let fs = require('fs');
+        let path = require('path');
+        let tmpDir = path.join(os.tmpdir(), 'uno-logger-test-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+
+        Logger.init({ enabled: true, maxFileSizeMB: 5, maxFilesPerCategory: 10 }, tmpDir);
+        Logger.log('auth', 'test_event', 1, {});
+        let realFile = Logger.listFiles('auth')[0].name;
+
+        assert.strictEqual(Logger.readFile('auth', realFile).length, 1, 'reading the real file must succeed');
+        assert.strictEqual(Logger.readFile('auth', '../../../etc/passwd'), null, 'path traversal must be rejected');
+        assert.strictEqual(Logger.readFile('auth', 'does-not-exist.log'), null, 'unknown filename must be rejected');
+        assert.strictEqual(Logger.readFile('bogus-category', realFile), null, 'invalid category must be rejected');
+
+        fs.rmSync(tmpDir, { recursive: true, force: true });
     }
 
 };

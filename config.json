@@ -1,4 +1,10 @@
 {
-  "adminPassword": "your-admin-password",
-  "federationDebugEnabled": false
+  "adminPassword": "pressin",
+  "federationDebugEnabled": true,
+  "logging": {
+    "enabled": true,
+    "maxFileSizeMB": 5,
+    "maxFilesPerCategory": 10,
+    "consoleOutput": true
+  }
 }

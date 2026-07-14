@@ -86,6 +86,7 @@ tr:hover td { background: rgba(154,101,21,0.08); }
         <button class="admin-tab-btn" onclick="switchTab('news',this)">NEWS</button>
         <button class="admin-tab-btn" onclick="switchTab('forum',this)">FORUM</button>
         <button class="admin-tab-btn" onclick="switchTab('federation',this)">FEDERATION</button>
+        <button class="admin-tab-btn" onclick="switchTab('logs',this)">LOGS</button>
     </nav>
 
     <!-- TAB: USERS -->
@@ -261,6 +262,45 @@ tr:hover td { background: rgba(154,101,21,0.08); }
                 <thead><tr><th>DOMAIN</th><th>STATUS</th><th>ADDED</th><th>LAST CHECKED</th><th>ACTIONS</th></tr></thead>
                 <tbody id="fed-peer-tbody"></tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- TAB: LOGS -->
+    <div class="tab-pane" id="tab-logs">
+        <div class="card">
+            <div style="font-size:11px;color:rgba(212,205,164,0.5);letter-spacing:1.5px;margin-bottom:14px">LOG SETTINGS</div>
+            <div class="stat-row">
+                <span class="stat-label">Enabled</span>
+                <input type="checkbox" id="log-enabled" style="width:auto;flex:none;margin-bottom:0"/>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Max file size (MB)</span>
+                <input type="number" id="log-max-size" min="1" max="100" style="width:80px;flex:none;margin-bottom:0"/>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Max files kept per category</span>
+                <input type="number" id="log-max-files" min="1" max="100" style="width:80px;flex:none;margin-bottom:0"/>
+                <button class="btn-primary btn-sm" onclick="saveLogSettings()">SAVE</button>
+            </div>
+            <div id="log-settings-msg" style="font-size:12px;margin-top:6px"></div>
+        </div>
+
+        <div class="card">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                <div style="font-size:11px;color:rgba(212,205,164,0.5);letter-spacing:1.5px">BROWSE</div>
+                <button class="btn-primary btn-sm" onclick="loadLogFiles('system')">SYSTEM</button>
+                <button class="btn-primary btn-sm" onclick="loadLogFiles('auth')">AUTH</button>
+                <button class="btn-primary btn-sm" onclick="loadLogFiles('game')">GAME</button>
+                <button class="btn-primary btn-sm" onclick="loadLogFiles('admin')">ADMIN</button>
+            </div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap">
+                <div style="flex:1;min-width:220px">
+                    <div style="overflow-x:auto"><table><thead><tr><th>FILE</th><th>SIZE</th><th>MODIFIED</th></tr></thead><tbody id="log-files-tbody"></tbody></table></div>
+                </div>
+                <div style="flex:2;min-width:300px">
+                    <div style="overflow-x:auto;max-height:500px;overflow-y:auto"><table><thead><tr><th>TIME</th><th>EVENT</th><th>USER</th><th>DATA</th></tr></thead><tbody id="log-lines-tbody"></tbody></table></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -464,6 +504,68 @@ function loadSettings() {
         .then(function(r){ return r.json(); })
         .then(function(d){ document.getElementById('s-expiry-days').value = d.sessionExpiryDays || 30; });
 }
+var currentLogCategory = 'system';
+
+function loadLogSettings() {
+    fetch('/api/admin/logs/settings', { headers: authHeaders() })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            document.getElementById('log-enabled').checked = !!d.enabled;
+            document.getElementById('log-max-size').value = d.maxFileSizeMB;
+            document.getElementById('log-max-files').value = d.maxFilesPerCategory;
+        });
+    loadLogFiles(currentLogCategory);
+}
+
+function saveLogSettings() {
+    var msg = document.getElementById('log-settings-msg');
+    msg.textContent = '';
+    fetch('/api/admin/logs/settings', {
+        method: 'PUT',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+            enabled: document.getElementById('log-enabled').checked,
+            maxFileSizeMB: parseInt(document.getElementById('log-max-size').value),
+            maxFilesPerCategory: parseInt(document.getElementById('log-max-files').value)
+        })
+    }).then(function(r){ return r.json(); }).then(function(d){
+        msg.style.color = d.error ? '#ff6666' : '#6de86d';
+        msg.textContent = d.error || 'Saved!';
+    });
+}
+
+function loadLogFiles(category) {
+    currentLogCategory = category;
+    document.getElementById('log-lines-tbody').innerHTML = '';
+    fetch('/api/admin/logs/files?category=' + encodeURIComponent(category), { headers: authHeaders() })
+        .then(function(r){ return r.json(); })
+        .then(function(files){
+            var tbody = document.getElementById('log-files-tbody');
+            tbody.innerHTML = '';
+            files.forEach(function(f){
+                var tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.innerHTML = '<td>' + f.name + '</td><td>' + (f.sizeBytes/1024).toFixed(1) + ' KB</td><td>' + new Date(f.mtime).toLocaleString() + '</td>';
+                tr.onclick = function(){ loadLogFile(category, f.name); };
+                tbody.appendChild(tr);
+            });
+        });
+}
+
+function loadLogFile(category, name) {
+    fetch('/api/admin/logs/file?category=' + encodeURIComponent(category) + '&name=' + encodeURIComponent(name), { headers: authHeaders() })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            var tbody = document.getElementById('log-lines-tbody');
+            tbody.innerHTML = '';
+            (d.lines || []).forEach(function(l){
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + (l.ts || '') + '</td><td>' + (l.event || '') + '</td><td>' + (l.userId === null || l.userId === undefined ? '' : l.userId) + '</td><td style="max-width:300px;word-break:break-all">' + JSON.stringify(l.data || {}) + '</td>';
+                tbody.appendChild(tr);
+            });
+        });
+}
+
 function saveSettings() {
     var days = parseInt(document.getElementById('s-expiry-days').value);
     var msg = document.getElementById('settings-msg');
@@ -657,6 +759,7 @@ function switchTab(name, btn) {
     document.getElementById('tab-'+name).classList.add('active');
     btn.classList.add('active');
     if (name === 'forum') loadForumBoards();
+    if (name === 'logs') loadLogSettings();
     if (name === 'federation') {
         loadFederationPeers();
         const advOn = localStorage.getItem('fedAdvancedMode') === '1';
