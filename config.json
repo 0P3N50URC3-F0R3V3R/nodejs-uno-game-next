@@ -1,6 +1,6 @@
 {
-  "adminPassword": "pressin",
-  "federationDebugEnabled": true,
+  "adminPassword": "your-admin-password",
+  "federationDebugEnabled": false,
   "logging": {
     "enabled": true,
     "maxFileSizeMB": 5,
