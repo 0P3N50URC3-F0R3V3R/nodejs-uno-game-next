@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP total",
     "to_next_level": "{cur} / {max} para el siguiente nivel",
     "change_password": "Cambiar contraseña",
+    "clear_local_data": "Borrar datos locales",
+    "clear_local_data_confirm": "Esto borrará toda la configuración guardada localmente (inicio de sesión, ajustes de sala, sonido, idioma, mesa, etc.) y recargará la página. ¿Continuar?",
     "change_username": "Cambiar nombre de usuario",
     "current_password": "Contraseña actual",
     "new_password": "Nueva contraseña",

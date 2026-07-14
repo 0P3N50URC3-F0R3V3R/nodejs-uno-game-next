@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP totalt",
     "to_next_level": "{cur} / {max} till nästa nivå",
     "change_password": "Byt lösenord",
+    "clear_local_data": "Rensa lokal data",
+    "clear_local_data_confirm": "Detta raderar alla lokalt sparade inställningar (inloggning, ruminställningar, ljud, språk, bord, osv.) och laddar om sidan. Fortsätta?",
     "change_username": "Byt användarnamn",
     "current_password": "Nuvarande lösenord",
     "new_password": "Nytt lösenord",

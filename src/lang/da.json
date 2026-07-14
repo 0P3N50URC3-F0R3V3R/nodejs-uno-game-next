@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP i alt",
     "to_next_level": "{cur} / {max} til næste niveau",
     "change_password": "Skift adgangskode",
+    "clear_local_data": "Ryd lokale data",
+    "clear_local_data_confirm": "Dette sletter alle lokalt gemte indstillinger (login, rumindstillinger, lyd, sprog, bord osv.) og genindlæser siden. Fortsæt?",
     "change_username": "Skift brugernavn",
     "current_password": "Nuværende adgangskode",
     "new_password": "Ny adgangskode",

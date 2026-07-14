@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP total",
     "to_next_level": "{cur} / {max} pentru nivelul următor",
     "change_password": "Schimbă parola",
+    "clear_local_data": "Șterge datele locale",
+    "clear_local_data_confirm": "Aceasta va șterge toate setările salvate local (autentificare, setări cameră, sunet, limbă, masă etc.) și va reîncărca pagina. Continui?",
     "change_username": "Schimbă numele de utilizator",
     "current_password": "Parola actuală",
     "new_password": "Parolă nouă",

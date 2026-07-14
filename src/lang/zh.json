@@ -87,6 +87,8 @@
     "xp_total": "共 {xp} 经验",
     "to_next_level": "{cur} / {max} 升级所需",
     "change_password": "修改密码",
+    "clear_local_data": "清除本地数据",
+    "clear_local_data_confirm": "这将清除所有本地保存的设置(登录、房间设置、声音、语言、桌子等),并重新加载页面。是否继续?",
     "change_username": "修改用户名",
     "current_password": "当前密码",
     "new_password": "新密码",

@@ -105,6 +105,7 @@
                         <input type="file" accept="image/*" style="display:none" @change="uploadAvatar" />
                     </label>
                     <button class="pp-action-btn" @click="changingPw = !changingPw; pwErr=''">{{ t('change_password') }}</button>
+                    <button class="pp-action-btn pp-action-btn-danger" @click="clearLocalData">{{ t('clear_local_data') }}</button>
                     <button class="pp-action-btn" @click="$emit('logout')">{{ t('logout') }}</button>
                 </div>
             </div>
@@ -288,6 +289,11 @@
                     headers: { 'Authorization': 'Bearer ' + this.authToken },
                     body: fd
                 }).then(r => r.json()).then(() => this.load());
+            },
+            clearLocalData() {
+                if (!window.confirm(this.t('clear_local_data_confirm'))) return;
+                localStorage.clear();
+                window.location.reload();
             }
         },
         watch: {
@@ -421,6 +427,8 @@
         font-size: 11px; padding: 5px 8px; cursor: pointer; text-align: center;
     }
     .pp-action-btn:hover { border-color: #9a6515; }
+    .pp-action-btn-danger { color: #cc4444; border-color: rgba(204, 68, 68, 0.4); }
+    .pp-action-btn-danger:hover { border-color: #ff6666; color: #ff6666; }
     .pp-tab {
         position: absolute; top: 0; right: -36px; width: 36px; height: 48px;
         background: rgba(0,0,0,0.92); border: 1px solid #9a6515; border-left: none;

@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP totalt",
     "to_next_level": "{cur} / {max} til neste nivå",
     "change_password": "Bytt passord",
+    "clear_local_data": "Fjern lokale data",
+    "clear_local_data_confirm": "Dette vil slette alle lokalt lagrede innstillinger (innlogging, rominnstillinger, lyd, språk, bord osv.) og laste siden på nytt. Fortsette?",
     "change_username": "Bytt brukernavn",
     "current_password": "Nåværende passord",
     "new_password": "Nytt passord",

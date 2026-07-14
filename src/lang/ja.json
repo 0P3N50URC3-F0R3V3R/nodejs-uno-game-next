@@ -87,6 +87,8 @@
     "xp_total": "合計 {xp} XP",
     "to_next_level": "次のレベルまで {cur} / {max}",
     "change_password": "パスワードを変更",
+    "clear_local_data": "ローカルデータを削除",
+    "clear_local_data_confirm": "これにより、ローカルに保存されたすべての設定(ログイン、ルーム設定、サウンド、言語、テーブルなど)が削除され、ページが再読み込みされます。続行しますか?",
     "change_username": "ユーザー名を変更",
     "current_password": "現在のパスワード",
     "new_password": "新しいパスワード",

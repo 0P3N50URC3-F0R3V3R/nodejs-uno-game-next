@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP tổng",
     "to_next_level": "{cur} / {max} đến cấp tiếp theo",
     "change_password": "Đổi mật khẩu",
+    "clear_local_data": "Xóa Dữ Liệu Cục Bộ",
+    "clear_local_data_confirm": "Thao tác này sẽ xóa mọi cài đặt đã lưu cục bộ (đăng nhập, cài đặt phòng, âm thanh, ngôn ngữ, bàn, v.v.) và tải lại trang. Tiếp tục?",
     "change_username": "Đổi tên người dùng",
     "current_password": "Mật khẩu hiện tại",
     "new_password": "Mật khẩu mới",

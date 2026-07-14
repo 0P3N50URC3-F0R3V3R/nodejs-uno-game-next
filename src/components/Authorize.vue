@@ -154,7 +154,7 @@
 
             <div class="form-section">
                 <div class="sec-hdr">{{ t('room_name') }}</div>
-                <input class="inp-name" type="text" :placeholder="t('room_placeholder')" v-model="room" maxlength="32" @input="clearErrors"/>
+                <input class="inp-name" type="text" :placeholder="t('room_placeholder')" v-model="room" maxlength="32" autocomplete="off" @input="clearErrors"/>
                 <div class="error-msg" v-if="roomError">{{ t('room_required') }}</div>
                 <div class="warn-msg" v-if="roomExistsWarning">
                     {{ t('room_exists', { room: room }) }}
@@ -165,12 +165,12 @@
 
             <div class="form-section">
                 <div class="sec-hdr">{{ t('room_password') }} <span class="sec-optional">{{ t('room_password_hint') }}</span></div>
-                <input class="inp-name" type="password" :placeholder="t('pw_blank')" v-model="password" maxlength="32"/>
+                <input class="inp-name" type="password" :placeholder="t('pw_blank')" v-model="password" maxlength="32" autocomplete="new-password"/>
             </div>
 
             <div class="form-section form-inline">
                 <span class="sec-hdr">{{ t('rounds') }}</span>
-                <input class="inp-rounds" type="text" v-model="maxRounds" maxlength="2" placeholder="5"/>
+                <input class="inp-rounds" type="text" v-model="maxRounds" maxlength="2" placeholder="5" autocomplete="off"/>
             </div>
 
             <div class="form-section">
@@ -187,7 +187,7 @@
                             <option value="medium">{{ t('medium') }}</option>
                             <option value="hard">{{ t('hard') }}</option>
                         </select>
-                        <input class="bot-name-inp" type="text" v-model="slot.name" maxlength="16" :placeholder="t('bot_name')"/>
+                        <input class="bot-name-inp" type="text" v-model="slot.name" maxlength="16" :placeholder="t('bot_name')" autocomplete="off"/>
                     </template>
                 </div>
             </div>
@@ -246,7 +246,7 @@
                     <span class="rs-desc">{{ t('afk_timer_desc') }}</span>
                 </label>
                 <div v-if="afkEnabled" class="form-inline" style="margin-top:6px;">
-                    <input class="inp-rounds" type="number" v-model="afkSeconds" min="10" max="120" style="width:60px;"/>
+                    <input class="inp-rounds" type="number" v-model="afkSeconds" min="10" max="120" style="width:60px;" autocomplete="off"/>
                     <span class="sec-optional" style="margin-left:4px;">{{ t('afk_timer_seconds') }} (10–120)</span>
                 </div>
             </div>
@@ -705,10 +705,38 @@
             },
             _stopLobbyTimer: function() {
                 if (this._lobbyTimer) { clearInterval(this._lobbyTimer); this._lobbyTimer = null; }
+            },
+            saveRoomSettings: function() {
+                localStorage.setItem('unoRoomSettings', JSON.stringify({
+                    room: this.room || '',
+                    password: this.password || '',
+                    maxRounds: this.maxRounds,
+                    ruleset: this.ruleset,
+                    hardcoreMode: this.hardcoreMode,
+                    battleRoyale: this.battleRoyale,
+                    doubleDeck: this.doubleDeck,
+                    nextgenMode: this.nextgenMode,
+                    multiDiscard: this.multiDiscard,
+                    afkEnabled: this.afkEnabled,
+                    afkSeconds: this.afkSeconds,
+                    playerSlots: this.playerSlots
+                }));
             }
         },
         watch: {
-            view: function(v) { if (v !== 'join') this._stopLobbyTimer(); }
+            view: function(v) { if (v !== 'join') this._stopLobbyTimer(); },
+            room: 'saveRoomSettings',
+            password: 'saveRoomSettings',
+            maxRounds: 'saveRoomSettings',
+            ruleset: 'saveRoomSettings',
+            hardcoreMode: 'saveRoomSettings',
+            battleRoyale: 'saveRoomSettings',
+            doubleDeck: 'saveRoomSettings',
+            nextgenMode: 'saveRoomSettings',
+            multiDiscard: 'saveRoomSettings',
+            afkEnabled: 'saveRoomSettings',
+            afkSeconds: 'saveRoomSettings',
+            playerSlots: { handler: 'saveRoomSettings', deep: true }
         },
         beforeDestroy: function() { this._stopLobbyTimer(); },
         mounted: function() {
@@ -749,6 +777,25 @@
             }
             let savedRoom = localStorage.getItem('unoRoomName');
             if(savedRoom) this.room = savedRoom;
+
+            let savedSettings = localStorage.getItem('unoRoomSettings');
+            if(savedSettings){
+                try {
+                    let s = JSON.parse(savedSettings);
+                    if(typeof s.room === 'string' && s.room) this.room = s.room;
+                    if(typeof s.password === 'string') this.password = s.password;
+                    if(s.maxRounds) this.maxRounds = s.maxRounds;
+                    if(s.ruleset) this.ruleset = s.ruleset;
+                    if(typeof s.hardcoreMode === 'boolean') this.hardcoreMode = s.hardcoreMode;
+                    if(typeof s.battleRoyale === 'boolean') this.battleRoyale = s.battleRoyale;
+                    if(typeof s.doubleDeck === 'boolean') this.doubleDeck = s.doubleDeck;
+                    if(typeof s.nextgenMode === 'boolean') this.nextgenMode = s.nextgenMode;
+                    if(typeof s.multiDiscard === 'boolean') this.multiDiscard = s.multiDiscard;
+                    if(typeof s.afkEnabled === 'boolean') this.afkEnabled = s.afkEnabled;
+                    if(s.afkSeconds) this.afkSeconds = s.afkSeconds;
+                    if(Array.isArray(s.playerSlots) && s.playerSlots.length === this.playerSlots.length) this.playerSlots = s.playerSlots;
+                } catch(e) {}
+            }
 
             let self = this;
             this._onRoomExists = function(data) { self.roomExistsWarning = true; self.roomExistsLocked = !!(data && data.locked); };

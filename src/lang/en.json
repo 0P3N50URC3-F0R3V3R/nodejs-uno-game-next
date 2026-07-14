@@ -87,6 +87,8 @@
     "xp_total": "{xp} XP total",
     "to_next_level": "{cur} / {max} to next level",
     "change_password": "Change Password",
+    "clear_local_data": "Clear Local Data",
+    "clear_local_data_confirm": "This will erase all locally saved settings (login, room settings, sound, language, table, etc.) and reload the page. Continue?",
     "change_username": "Change Username",
     "current_password": "Current Password",
     "new_password": "New Password",

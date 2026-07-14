@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP total",
     "to_next_level": "{cur} / {max} pour le niveau suivant",
     "change_password": "Changer le mot de passe",
+    "clear_local_data": "Effacer les données locales",
+    "clear_local_data_confirm": "Cela effacera tous les paramètres enregistrés localement (connexion, paramètres de salle, son, langue, table, etc.) et rechargera la page. Continuer ?",
     "change_username": "Changer le nom d'utilisateur",
     "current_password": "Mot de passe actuel",
     "new_password": "Nouveau mot de passe",

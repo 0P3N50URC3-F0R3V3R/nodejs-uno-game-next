@@ -63,7 +63,7 @@
                     <div v-for="bg in ownedBgs" :key="bg.id" class="gmenu-bg-item"
                          :class="{ active: activeBg === bg.file_path }"
                          @click="setBg(bg.file_path)">
-                        <video :src="'/store/asset/' + bg.file_path" autoplay loop muted playsinline class="gmenu-bg-thumb"></video>
+                        <video :src="'/store/asset/' + bg.file_path" loop muted playsinline preload="metadata" class="gmenu-bg-thumb" @mouseenter="playThumb" @mouseleave="pauseThumb"></video>
                     </div>
                 </div>
             </div>
@@ -160,6 +160,8 @@
                         if (equipped) this.activeBg = equipped.file_path;
                     }.bind(this));
             },
+            playThumb: function(e) { e.target.play(); },
+            pauseThumb: function(e) { e.target.pause(); e.target.currentTime = 0; },
             setBg: function(filePath) {
                 this.activeBg = filePath || null;
                 this.$emit('video-bg-change', filePath ? '/store/asset/' + filePath : null);

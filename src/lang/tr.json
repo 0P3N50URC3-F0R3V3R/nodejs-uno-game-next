@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP toplam",
     "to_next_level": "{cur} / {max} sonraki seviyeye",
     "change_password": "Şifre değiştir",
+    "clear_local_data": "Yerel Verileri Temizle",
+    "clear_local_data_confirm": "Bu, yerel olarak kaydedilmiş tüm ayarları (giriş, oda ayarları, ses, dil, masa vb.) silecek ve sayfayı yeniden yükleyecektir. Devam edilsin mi?",
     "change_username": "Kullanıcı adı değiştir",
     "current_password": "Mevcut şifre",
     "new_password": "Yeni şifre",

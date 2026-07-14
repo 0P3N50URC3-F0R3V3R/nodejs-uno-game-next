@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP összesen",
     "to_next_level": "{cur} / {max} a következő szintig",
     "change_password": "Jelszó Módosítása",
+    "clear_local_data": "Helyi Adatok Törlése",
+    "clear_local_data_confirm": "Ez törli az összes helyileg mentett beállítást (bejelentkezés, szobabeállítások, hang, nyelv, asztal stb.), és újratölti az oldalt. Folytatod?",
     "change_username": "Névváltoztatás",
     "current_password": "Jelenlegi Jelszó",
     "new_password": "Új Jelszó",

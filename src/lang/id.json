@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP total",
     "to_next_level": "{cur} / {max} ke level berikutnya",
     "change_password": "Ganti kata sandi",
+    "clear_local_data": "Hapus Data Lokal",
+    "clear_local_data_confirm": "Ini akan menghapus semua pengaturan yang tersimpan secara lokal (login, pengaturan ruangan, suara, bahasa, meja, dll.) dan memuat ulang halaman. Lanjutkan?",
     "change_username": "Ganti nama pengguna",
     "current_password": "Kata sandi saat ini",
     "new_password": "Kata sandi baru",

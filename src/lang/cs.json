@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP celkem",
     "to_next_level": "{cur} / {max} do další úrovně",
     "change_password": "Změnit heslo",
+    "clear_local_data": "Vymazat místní data",
+    "clear_local_data_confirm": "Tímto se smažou všechna místně uložená nastavení (přihlášení, nastavení místnosti, zvuk, jazyk, stůl atd.) a stránka se znovu načte. Pokračovat?",
     "change_username": "Změnit uživatelské jméno",
     "current_password": "Aktuální heslo",
     "new_password": "Nové heslo",

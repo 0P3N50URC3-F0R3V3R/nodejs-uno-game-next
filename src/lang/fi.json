@@ -86,6 +86,8 @@
     "xp_total": "{xp} XP yhteensä",
     "to_next_level": "{cur} / {max} seuraavalle tasolle",
     "change_password": "Vaihda salasana",
+    "clear_local_data": "Tyhjennä paikalliset tiedot",
+    "clear_local_data_confirm": "Tämä poistaa kaikki paikallisesti tallennetut asetukset (kirjautuminen, huoneasetukset, ääni, kieli, pöytä jne.) ja lataa sivun uudelleen. Jatketaanko?",
     "change_username": "Vaihda käyttäjänimi",
     "current_password": "Nykyinen salasana",
     "new_password": "Uusi salasana",
