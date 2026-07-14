@@ -1,3 +1,4 @@
 {
-  "adminPassword": "pressin"
+  "adminPassword": "your-admin-password",
+  "federationDebugEnabled": false
 }
