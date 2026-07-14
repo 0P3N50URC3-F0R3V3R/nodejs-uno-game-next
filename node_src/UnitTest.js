@@ -44,6 +44,10 @@ module.exports = class UnitTest{
         this.federationGuestWinCreditsHomeUsername();
         this.achievementsServiceNoSpuriousWeeklyReset();
         this.stackingWinTransfersPendingStackToNextPlayer();
+        this.multiDiscardRuleBundlesMatchingCardsInOneMove();
+        this.multiDiscardRuleOffByDefaultDoesNotBundle();
+        this.multiDiscardRuleIgnoresActionAndWildCards();
+        this.requiresTargetCardAsLastCardWinsInstantlyWithoutPendingInteraction();
 
     }
     clientRepo(){
@@ -1581,6 +1585,138 @@ module.exports = class UnitTest{
         assert.strictEqual(a.getHasWon(), true, 'A must still be declared the round winner');
         assert.strictEqual(b.getCardsCount(), bCountBefore + 4, 'the accumulated +4 stack must still be dealt to B, not discarded just because the stacker won the round on that same play');
         assert.strictEqual(gm.stackPending, null, 'stack must be resolved (cleared) after being applied');
+    }
+
+    requiresTargetCardAsLastCardWinsInstantlyWithoutPendingInteraction(){
+        let ClientRepository = require('./UNO/UNOClientRepository.js');
+        let UNOClient = require('./UNO/UNOClient.js');
+        let GameRulesModel = require('./UNO/GameRulesModel.js');
+        let Card = require('./UNO/Card.js');
+
+        let repo = new ClientRepository();
+        let a = new UNOClient("A"); let b = new UNOClient("B");
+        repo.insert(a); repo.insert(b);
+        let gm = new GameRulesModel(repo, 5, 'stacking', false, { nextgenMode: true });
+        gm.deal();
+        a.setTurn(true);
+
+        // A's only remaining card is a wild "steal 2" (tg1/tg2 require a target pick
+        // before resolving) -- playing it empties A's hand in the same move, so A must
+        // win outright rather than being forced to select a steal target they'll never
+        // get to use.
+        a.getCards().slice().forEach(c => a.removeCard(c));
+        let steal2 = new Card(9601, 'ktg2');
+        gm.cardRepository.insert(steal2);
+        a.addCard(steal2);
+
+        let topCard = new Card(9602, 'y6');
+        gm.cardRepository.insert(topCard);
+        gm.discardDeck.push(topCard);
+
+        gm.place(a, { id: steal2.getId(), type: 'ytg2' });
+
+        assert.strictEqual(a.getCardsCount(), 0, 'A\'s hand must be empty after playing their last card');
+        assert.strictEqual(a.getHasWon(), true, 'A must be declared the round winner immediately');
+        assert.strictEqual(gm.pendingInteraction, null, 'no target-selection interaction may be started once the playing hand is already empty');
+    }
+
+    multiDiscardRuleBundlesMatchingCardsInOneMove(){
+        let ClientRepository = require('./UNO/UNOClientRepository.js');
+        let UNOClient = require('./UNO/UNOClient.js');
+        let GameRulesModel = require('./UNO/GameRulesModel.js');
+        let Card = require('./UNO/Card.js');
+        let assert = require('assert');
+
+        let repo = new ClientRepository();
+        let a = new UNOClient("A"); let b = new UNOClient("B");
+        repo.insert(a); repo.insert(b);
+        let gm = new GameRulesModel(repo, 5, 'original', false, { multiDiscard: true, doubleDeck: true });
+        gm.deal();
+        a.setTurn(true);
+
+        // Give A exactly three cards: two "yellow 4"s (must bundle) and one "red 4"
+        // (same number, different color -- must NOT bundle, proves the match is on
+        // the full type string, not just the number).
+        a.getCards().slice().forEach(c => a.removeCard(c));
+        let y4a = new Card(9301, 'y4');
+        let y4b = new Card(9302, 'y4');
+        let r4 = new Card(9303, 'r4');
+        [y4a, y4b, r4].forEach(c => gm.cardRepository.insert(c));
+        a.addCard(y4a); a.addCard(y4b); a.addCard(r4);
+
+        // Top of discard is a yellow 6 -- makes the first y4 a legal play (matching color).
+        let topCard = new Card(9304, 'y6');
+        gm.cardRepository.insert(topCard);
+        gm.discardDeck.push(topCard);
+
+        let discardCountBefore = gm.discardDeck.length;
+        gm.place(a, { id: y4a.getId(), type: y4a.getType() });
+
+        assert.strictEqual(a.getCardsCount(), 1, 'both yellow 4s must be gone, only the red 4 remains');
+        assert.strictEqual(a.getCards()[0].getType(), 'r4', 'the surviving card must be the red 4, not a yellow 4');
+        assert.strictEqual(gm.discardDeck.length, discardCountBefore + 2, 'both yellow 4s must have landed on the discard pile');
+        assert.strictEqual(b.getTurn(), true, 'turn must pass to B exactly once, not twice, despite two cards being discarded');
+    }
+
+    multiDiscardRuleOffByDefaultDoesNotBundle(){
+        let ClientRepository = require('./UNO/UNOClientRepository.js');
+        let UNOClient = require('./UNO/UNOClient.js');
+        let GameRulesModel = require('./UNO/GameRulesModel.js');
+        let Card = require('./UNO/Card.js');
+        let assert = require('assert');
+
+        let repo = new ClientRepository();
+        let a = new UNOClient("A"); let b = new UNOClient("B");
+        repo.insert(a); repo.insert(b);
+        let gm = new GameRulesModel(repo, 5, 'original', false, { doubleDeck: true }); // multiDiscard NOT set
+        gm.deal();
+        a.setTurn(true);
+
+        a.getCards().slice().forEach(c => a.removeCard(c));
+        let y4a = new Card(9401, 'y4');
+        let y4b = new Card(9402, 'y4');
+        [y4a, y4b].forEach(c => gm.cardRepository.insert(c));
+        a.addCard(y4a); a.addCard(y4b);
+
+        let topCard = new Card(9403, 'y6');
+        gm.cardRepository.insert(topCard);
+        gm.discardDeck.push(topCard);
+
+        gm.place(a, { id: y4a.getId(), type: y4a.getType() });
+
+        assert.strictEqual(a.getCardsCount(), 1, 'with the option off, only the played card leaves the hand -- the matching duplicate must stay');
+    }
+
+    multiDiscardRuleIgnoresActionAndWildCards(){
+        let ClientRepository = require('./UNO/UNOClientRepository.js');
+        let UNOClient = require('./UNO/UNOClient.js');
+        let GameRulesModel = require('./UNO/GameRulesModel.js');
+        let Card = require('./UNO/Card.js');
+        let assert = require('assert');
+
+        let repo = new ClientRepository();
+        let a = new UNOClient("A"); let b = new UNOClient("B");
+        repo.insert(a); repo.insert(b);
+        let gm = new GameRulesModel(repo, 5, 'original', false, { multiDiscard: true, doubleDeck: true });
+        gm.deal();
+        a.setTurn(true);
+
+        // Two identical skip cards -- 'n' is this codebase's skip code (see finishTurn's
+        // `numb === 'n'` check), a letter-coded number that must never bundle even with
+        // multiDiscard on, since the rule only applies to plain numbered cards.
+        a.getCards().slice().forEach(c => a.removeCard(c));
+        let skipA = new Card(9501, 'yn');
+        let skipB = new Card(9502, 'yn');
+        [skipA, skipB].forEach(c => gm.cardRepository.insert(c));
+        a.addCard(skipA); a.addCard(skipB);
+
+        let topCard = new Card(9503, 'y6');
+        gm.cardRepository.insert(topCard);
+        gm.discardDeck.push(topCard);
+
+        gm.place(a, { id: skipA.getId(), type: skipA.getType() });
+
+        assert.strictEqual(a.getCardsCount(), 1, 'action cards must never bundle, even with a matching duplicate in hand');
     }
 
 };

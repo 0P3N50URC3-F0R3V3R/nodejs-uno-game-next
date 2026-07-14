@@ -21,7 +21,7 @@ module.exports = class UNOGameService extends GameService{
         config = config || {};
         super(id, new MessageRepository(), new UNOClientRepository());
 
-        this.gameRulesModel = new GameRulesModel(this.getClientRepository(), config.maxRounds, config.ruleset, config.hardcoreMode, { battleRoyale: config.battleRoyale, doubleDeck: config.doubleDeck, nextgenMode: config.nextgenMode });
+        this.gameRulesModel = new GameRulesModel(this.getClientRepository(), config.maxRounds, config.ruleset, config.hardcoreMode, { battleRoyale: config.battleRoyale, doubleDeck: config.doubleDeck, nextgenMode: config.nextgenMode, multiDiscard: config.multiDiscard });
         this.clientResponseBuilder = new ClientResponseBuilder(this.getClientRepository(), this.getGameRulesModel());
 
         this.actionHandlers.login = new LoginActionHandler(this);

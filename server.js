@@ -1060,6 +1060,7 @@ io.sockets.on('connection', function(socket) {
         let battleRoyale = !!(data && typeof data === 'object' && data.battleRoyale);
         let doubleDeck = !!(data && typeof data === 'object' && data.doubleDeck);
         let nextgenMode = !!(data && typeof data === 'object' && data.nextgenMode);
+        let multiDiscard = !!(data && typeof data === 'object' && data.multiDiscard) && (doubleDeck || nextgenMode);
         if(battleRoyale) hardcoreMode = false;
         if(nextgenMode) doubleDeck = false;
         // Nextgen's punishment cards (+6/+8/+10) applied instantly bloat hands too
@@ -1113,7 +1114,8 @@ io.sockets.on('connection', function(socket) {
                 hardcoreMode: hardcoreMode,
                 battleRoyale: battleRoyale,
                 doubleDeck: doubleDeck,
-                nextgenMode: nextgenMode
+                nextgenMode: nextgenMode,
+                multiDiscard: multiDiscard
             });
             gameService.password = password;
             gameService.afkTimeout = afkTimeout;

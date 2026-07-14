@@ -622,6 +622,7 @@
                 clearInterval(this._unoCountdown);
                 this._lastDiscardMoveId = -1;
                 this._animPending = 0;
+                this._clearAnimPendingWatchdog();
                 this._discardAnimLockUntil = 0;
                 this._stealFrameTargetName = null;
                 this._stealPickOriginalY = {};
@@ -924,8 +925,37 @@
                     if(this._animPending > 0) this._animPending--;
                 }
                 if(this._animPending > 0) return;
+                this._clearAnimPendingWatchdog();
                 for(let i=0; i<this.state.clients.length; i++){
                     this.updateHand(this.state.clients[i].name);
+                }
+            },
+            _bumpAnimPending:function(){
+                this._animPending++;
+                if(this._animPendingWatchdog) return;
+                // Belt-and-suspenders: _animPending is a hand-maintained counter tied to
+                // GSAP onComplete callbacks across a bursty, replay-prone event stream (see
+                // the replay guard above). If it ever drifts positive with nothing left to
+                // decrement it, hands stay permanently un-fanned. Force a resync a few
+                // seconds after any card starts moving, well past the longest legitimate
+                // stagger (a full-table Rotate finishes in ~1.6s).
+                let self = this;
+                this._animPendingWatchdog = setTimeout(function(){
+                    self._animPendingWatchdog = null;
+                    if(self._animPending <= 0) return;
+                    self._animPending = 0;
+                    for(let i = 0; i < self.state.game.cards.length; i++){
+                        self.state.game.cards[i]._pendingAnim = false;
+                    }
+                    for(let i = 0; i < self.state.clients.length; i++){
+                        self.updateHand(self.state.clients[i].name);
+                    }
+                }, 4000);
+            },
+            _clearAnimPendingWatchdog:function(){
+                if(this._animPendingWatchdog){
+                    clearTimeout(this._animPendingWatchdog);
+                    this._animPendingWatchdog = null;
                 }
             },
             onHandWheel: function(e){
@@ -1068,12 +1098,16 @@
                 let hasDiscard = false;
                 let discardPrevOwner = null;
                 let drawCount = 0;
+                let isRotateBatch = false;
                 for(let i = 0; i < events.length; i++){
                     let e = events[i];
                     if(e.newOwner === 'dsc'){
                         hasDiscard = true;
                         let c = this.state.game.cards[e.cardId];
-                        if(c) discardPrevOwner = c.owner;
+                        if(c){
+                            discardPrevOwner = c.owner;
+                            isRotateBatch = c.type && c.type.slice(1) === 'rot';
+                        }
                         break;
                     }
                     if(e.newOwner === 'draw') drawCount++;
@@ -1106,12 +1140,27 @@
                 let dealIdx = 0;
                 for(let i = 0; i < events.length; i++){
                     let event = events[i];
-                    if(typeof this.state.game.cards[event.cardId] === 'undefined') continue;
-                    this.cardSetOwner(this.state.game.cards[event.cardId], event.newOwner);
-                    if(hasDiscard && event.newOwner !== 'dsc' && event.newOwner !== 'draw'){
-                        this.state.game.cards[event.cardId].transform.delay = 0.22 + dealIdx * 0.05;
-                        this.state.game.cards[event.cardId]._pendingAnim = true;
-                        this._animPending++;
+                    let card = this.state.game.cards[event.cardId];
+                    if(typeof card === 'undefined') continue;
+                    this.cardSetOwner(card, event.newOwner);
+                    // A replayed event (the cursor self-correction below re-slices from 0
+                    // whenever the server's event log is shorter than expected, e.g. right
+                    // after any clearEvents()) must not double-count a card that's already
+                    // mid-animation, or _animPending gains a phantom unit with no matching
+                    // decrement, permanently blocking the post-animation hand re-fan.
+                    if(hasDiscard && event.newOwner !== 'dsc' && event.newOwner !== 'draw' && !card._pendingAnim){
+                        if(isRotateBatch){
+                            // Every active hand moves at once here (vs. a single card for
+                            // Trade Hands) -- drop the per-card stagger and shorten the
+                            // flight itself so the whole table's redistribution reads as
+                            // one quick beat instead of a slow, busy wash of dozens of cards.
+                            card.transform.d = 0.5;
+                            card.transform.delay = 0;
+                        } else {
+                            card.transform.delay = 0.22 + dealIdx * 0.05;
+                        }
+                        card._pendingAnim = true;
+                        this._bumpAnimPending();
                         dealIdx++;
                     }
                 }
@@ -1158,7 +1207,7 @@
 
                     if(cards[i].owner !== this.state.game.cards[i].owner){
                         this.cardSetOwner(this.state.game.cards[i], cards[i].owner);
-                        if(cards[i].owner !== OWNER_DISCARD_DECK && cards[i].owner !== OWNER_DRAW_DECK){
+                        if(cards[i].owner !== OWNER_DISCARD_DECK && cards[i].owner !== OWNER_DRAW_DECK && !this.state.game.cards[i]._pendingAnim){
                             if(isRotate){
                                 // Every card on the table moves at once here (vs. a single
                                 // card for Trade Hands) — on top of dropping the stagger,
@@ -1171,7 +1220,7 @@
                                 this.state.game.cards[i].transform.delay = dealIdx * 0.05;
                             }
                             this.state.game.cards[i]._pendingAnim = true;
-                            this._animPending++;
+                            this._bumpAnimPending();
                             dealIdx++;
                         }
                     }
@@ -1248,6 +1297,7 @@
 
                 if(prevWinner && !this.state.game.winner){
                     this._animPending = 0;
+                    this._clearAnimPendingWatchdog();
                     for(let i = 0; i < this.state.game.cards.length; i++){
                         this.state.game.cards[i]._pendingAnim = false;
                         this.transitionToDrawDeck(this.state.game.cards[i]);
@@ -1261,6 +1311,9 @@
                         this.initClientsConfig(this.state.clients);
                     }
                     this.initDeck(response.game.cards);
+                    // deal() already reflected in this snapshot pushed same-tick events; mark
+                    // consumed or processEvents() replays the deal, re-folding/re-fanning hands.
+                    this._processedEventCount = response.game.events.length;
 
                 }else if(this.config.initialized && response.game.events.length > 0){
                     if(!this.config.playersInitialized){
@@ -1542,6 +1595,7 @@
                 }
 
                 sound.play(def.soundKey);
+                if(def.skipCount) sound.play('unoFail');
                 // Amount-specific draw sound — only for immediate (non-stacking) resolution;
                 // in stacking mode the stackPending watcher plays it on growth/take instead.
                 if(def.punishAmount && this.state.game.ruleset !== 'stacking'){
@@ -1589,6 +1643,7 @@
             let savedTable = parseInt(localStorage.getItem('unoTable'));
             if(savedTable >= 1 && savedTable <= 6) this.tableIndex = savedTable;
             this._animPending = 0;
+            this._animPendingWatchdog = null;
             this._discardAnimLockUntil = 0;
             this._prevLobbyClients = null;
             this._stealFrameTargetName = null;

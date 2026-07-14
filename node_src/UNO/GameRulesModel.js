@@ -37,6 +37,7 @@ module.exports = class GameRulesModel{
         this.battleRoyale = !!(options && options.battleRoyale);
         this.doubleDeck = !!(options && options.doubleDeck);
         this.nextgenMode = !!(options && options.nextgenMode);
+        this.multiDiscard = !!(options && options.multiDiscard);
         this.brEliminated = [];
         this.brNextRank = 1;
         // Hoarder losses (reason: 'hoarder') always rank worse than any
@@ -488,7 +489,7 @@ module.exports = class GameRulesModel{
                         unoClient.setTakeOrLeave(false);
                         this.placeCard(card);
                         let def = CardDefs[card.getNumber()];
-                        if(def && def.requiresTarget){
+                        if(def && def.requiresTarget && unoClient.getCardsCount() > 0){
                             this.pendingInteraction = {
                                 kind: def.requiresTarget,
                                 from: unoClient.getName(),
@@ -500,6 +501,7 @@ module.exports = class GameRulesModel{
                             this.validateNextMove();
                             return;
                         }
+                        this._playMatchingDuplicates(unoClient, card);
                         this.finishTurn(unoClient, card);
                         if(def && def.colorless){
                             this.colorless = true;
@@ -566,6 +568,17 @@ module.exports = class GameRulesModel{
         card.setOwner("dsc");
         this.saveEvent(card, "dsc");
         this.discardDeck.push(card);
+    }
+    _playMatchingDuplicates(unoClient, card){
+        if(!this.multiDiscard) return;
+        let numb = card.getNumber();
+        if(!/^\d+$/.test(numb)) return;
+        let type = card.getType();
+        let matches = unoClient.getCards().filter(c => c.getType() === type);
+        for(let i = 0; i < matches.length; i++){
+            unoClient.removeCard(matches[i]);
+            this.placeCard(matches[i]);
+        }
     }
     incrementMoveIndex(){
         this.moveIndex++;

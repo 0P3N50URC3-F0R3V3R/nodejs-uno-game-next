@@ -232,6 +232,11 @@
                     <span class="rs-name">{{ t('nextgen_mode') }}</span>
                     <span class="rs-desc">{{ t('nextgen_mode_desc') }}</span>
                 </label>
+                <label class="rs-opt" :class="{active: multiDiscard, disabled: !doubleDeck && !nextgenMode}" @click.prevent="toggleMultiDiscard">
+                    <input type="checkbox" v-model="multiDiscard" :disabled="!doubleDeck && !nextgenMode"/>
+                    <span class="rs-name">{{ t('multi_discard_rule') }}</span>
+                    <span class="rs-desc">{{ t('multi_discard_rule_desc') }}</span>
+                </label>
             </div>
 
             <div class="form-section">
@@ -367,6 +372,7 @@
                 battleRoyale: false,
                 doubleDeck: false,
                 nextgenMode: false,
+                multiDiscard: false,
                 afkEnabled: false,
                 afkSeconds: '60',
                 langCode: lang.current,
@@ -426,6 +432,7 @@
             toggleDoubleDeck:function(){
                 if(this.nextgenMode) return;
                 this.doubleDeck = !this.doubleDeck;
+                if(!this.doubleDeck && !this.nextgenMode) this.multiDiscard = false;
             },
             toggleNextgen:function(){
                 this.nextgenMode = !this.nextgenMode;
@@ -435,6 +442,11 @@
                     // balanced -- stacking is mandatory whenever nextgen mode is on.
                     this.ruleset = 'stacking';
                 }
+                if(!this.doubleDeck && !this.nextgenMode) this.multiDiscard = false;
+            },
+            toggleMultiDiscard:function(){
+                if(!this.doubleDeck && !this.nextgenMode) return;
+                this.multiDiscard = !this.multiDiscard;
             },
             t: function(key, vars) { return lang.t(key, vars); },
             setLang: function(code) { lang.current = code; this.langCode = code; },
@@ -608,6 +620,7 @@
                     battleRoyale: this.battleRoyale,
                     doubleDeck: this.doubleDeck,
                     nextgenMode: this.nextgenMode,
+                    multiDiscard: this.multiDiscard,
                     afkTimeout: afkTimeout,
                     password: this.password || null,
                     creating: true
