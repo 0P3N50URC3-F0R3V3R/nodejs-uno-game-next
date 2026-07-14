@@ -1084,7 +1084,7 @@
                     posZ++;
                 }
             },            
-            processEvents:function(){
+            processEvents:function(freshCards){
                 let allEvents = this.state.game.events;
                 if(typeof this._processedEventCount !== 'number' || allEvents.length < this._processedEventCount){
                     this._processedEventCount = 0;
@@ -1106,7 +1106,12 @@
                         let c = this.state.game.cards[e.cardId];
                         if(c){
                             discardPrevOwner = c.owner;
-                            isRotateBatch = c.type && c.type.slice(1) === 'rot';
+                            // Read type from the fresh response, not the stale local card —
+                            // an opponent/AI's card is hidden (type null) in our local cache
+                            // until this very broadcast reveals it, so the local copy still
+                            // shows the type from before it was discarded.
+                            let freshType = freshCards && freshCards[e.cardId] ? freshCards[e.cardId].type : c.type;
+                            isRotateBatch = freshType && freshType.slice(1) === 'rot';
                         }
                         break;
                     }
@@ -1320,7 +1325,7 @@
                         this.config.playersInitialized = true;
                         this.initClientsConfig(this.state.clients);
                     }
-                    this.processEvents();
+                    this.processEvents(response.game.cards);
                     this._detectActionEvent(prevTurnName, response);
                 }
                 this.updateState(response.game.cards);
